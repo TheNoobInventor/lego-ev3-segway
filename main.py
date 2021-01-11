@@ -32,6 +32,7 @@ action_timer = StopWatch() #
 GYRO_CALIBRATION_LOOP_COUNT = 200 #
 GYRO_OFFSET_FACTOR = 0.0005 # 0.0005 # Where is this from? can we tweak it or leave as it
 TARGET_LOOP_PERIOD = 20 # 15 milliseconds # what is this?
+last_error = 0
 
 """
 # "Robot motion/action definition"
@@ -69,50 +70,50 @@ def update_action():
     # Button.RIGHT_UP - forward 
     # Button.RIGHT_DOWN - backward
 
-    # while Button.BEACON not in infrared_sensor.buttons(2):
-    #     ## if Button.BEACON not in infrared_sensor.buttons(2):
-    #     if Button.LEFT_UP in infrared_sensor.keypad():
-    #         yield TURN_LEFT
-    #     elif Button.LEFT_DOWN in infrared_sensor.keypad():
-    #         yield TURN_RIGHT
-    #     elif Button.RIGHT_UP in infrared_sensor.keypad():
-    #         yield FORWARD
-    #     elif Button.RIGHT_DOWN in infrared_sensor.keypad():
-    #         yield BACKWARD
-    #     else:
-    #         yield
-    # Tune the above section later (also for smooth button implementation), after sorting out the other features
+        while Button.BEACON not in infrared_sensor.buttons(2):
+            ## if Button.BEACON not in infrared_sensor.buttons(2):
+            if Button.LEFT_UP in infrared_sensor.keypad():
+                yield TURN_LEFT
+            elif Button.LEFT_DOWN in infrared_sensor.keypad():
+                yield TURN_RIGHT
+            elif Button.RIGHT_UP in infrared_sensor.keypad():
+                yield FORWARD
+            elif Button.RIGHT_DOWN in infrared_sensor.keypad():
+                yield BACKWARD
+            else:
+                yield
 
     # Under beacon channel 2
-        relative_distance, angle = infrared_sensor.beacon(2)
-        last_error = 0
-        action_timer.reset()
+        # relative_distance, angle = infrared_sensor.beacon(2)
+        # action_timer.reset()
+        # global last_error
 
-        if relative_distance == None:
-            yield
-        else: # that means that beacon is on
-            # Should these be declared here?
-            angle_error = 0 - angle
-            K_angle = 4
-            steering = K_angle * angle_error
-            action = Action(drive_speed=0, steering=steering)
-            print("Steering is {}, for angle of {}, with an error of {}".format(steering, angle, angle_error))
-            yield action
-            # if it's within a certain range, then translate 
-            # Adjust and tune later (Using a PD controller for now)
-            if angle_error < 10:
-                # distance_error = 100 - relative_distance # is this right?
-                p_error = 100 - relative_distance
-                d_error = p_error - last_error/action_timer.time()
-                K_p = 10
-                K_d = 3
-                drive_speed = K_p * p_error + K_d * d_error
-                # action = Action(drive_speed=drive_speed, steering=steering)
-                action = Action(drive_speed=drive_speed, steering=0)
-                print("Drive speed is {}, for rel dist of {}\n".format(drive_speed, relative_distance))
-                last_error = p_error # Change names of variables? 
-                yield action
-                # Add a slowing mechanism
+        # if relative_distance == None:
+        #     yield
+        # else: # that means that beacon is on
+        #     # Should these be declared here?
+        #     angle_error = 0 - angle
+        #     K_angle = 4
+        #     steering = K_angle * angle_error
+        #     action = Action(drive_speed=0, steering=steering)
+        #     print("Steering is {}, for angle of {}, with an error of {}".format(steering, angle, angle_error))
+        #     yield action
+        #     # if it's within a certain range, then translate 
+        #     # Adjust and tune later (Using a PD controller for now)
+        #     if angle_error < 10:
+        #         p_error = 100 - relative_distance
+        #         d_error = p_error - last_error/action_timer.time()
+        #         K_p = 9
+        #         K_d = 5
+        #         drive_speed = K_p * p_error + K_d * d_error
+        #         action = Action(drive_speed=drive_speed, steering=0)
+        #         print("Drive speed is {}, for rel dist of {}\n".format(drive_speed, relative_distance))
+        #         print("D_error is {} and Last error is {}\n".format(d_error, last_error))
+        #         last_error = p_error # Change names of variables?
+        #         if relative_distance < 10:
+        #             yield 
+        #         else: 
+        #             yield action
         # Tune balancing parameters
         # Backwards movement when its too close too?
 
