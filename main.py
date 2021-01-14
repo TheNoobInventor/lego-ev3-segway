@@ -117,19 +117,11 @@ def update_action():
         # Tune balancing parameters
         # Backwards movement when its too close too?
 
-    # Use action_timer.reset() and action_timer.time() where necessary
-
         # Further notes
-        
-        # MAP RELATIVE DISTANCE -- the next important step
 
         # Also output this relative distance on display, after mapping
         # output in metres and maybe play a sound when something is getting
         # too close
-
-        # Second channel will be used to drive to the where the beacon is 
-        # (this will be the most tasking I guess, and I think it will be a 
-        # worthwhile challenge then we can document and submit to ev3dev)
 
 
 # if __name__ == "__main__":
