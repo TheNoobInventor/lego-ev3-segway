@@ -32,7 +32,7 @@ action_timer = StopWatch() #
 GYRO_CALIBRATION_LOOP_COUNT = 200 #
 GYRO_OFFSET_FACTOR = 0.0005 # 0.0005 # Where is this from? can we tweak it or leave as it
 TARGET_LOOP_PERIOD = 20 # 15 milliseconds # what is this?
-last_error = 0
+prev_error = 0
 
 """
 # "Robot motion/action definition"
@@ -62,67 +62,60 @@ TURN_LEFT = Action(drive_speed=0, steering=-80)
 #     yield action
 
 def update_action():
-    while True:    
-    # Under beacon channel 1
+    while 1:    
+    # Beacon channel 1
 
     # Button.LEFT_UP - left
     # Button.LEFT_DOWN - right
     # Button.RIGHT_UP - forward 
     # Button.RIGHT_DOWN - backward
 
-        while Button.BEACON not in infrared_sensor.buttons(2):
-            ## if Button.BEACON not in infrared_sensor.buttons(2):
-            if Button.LEFT_UP in infrared_sensor.keypad():
-                yield TURN_LEFT
-            elif Button.LEFT_DOWN in infrared_sensor.keypad():
-                yield TURN_RIGHT
-            elif Button.RIGHT_UP in infrared_sensor.keypad():
-                yield FORWARD
-            elif Button.RIGHT_DOWN in infrared_sensor.keypad():
-                yield BACKWARD
-            else:
-                yield
+        # We are using keypad() instead of buttons() because keypad() only works on channel 1
+        # also it cannot detect the beacon button.
 
-    # Under beacon channel 2
-        # relative_distance, angle = infrared_sensor.beacon(2)
-        # action_timer.reset()
-        # global last_error
+        # if Button.LEFT_UP in infrared_sensor.keypad():
+        #     yield TURN_LEFT
+        # elif Button.LEFT_DOWN in infrared_sensor.keypad():
+        #     yield TURN_RIGHT
+        # elif Button.RIGHT_UP in infrared_sensor.keypad():
+        #     yield FORWARD
+        # elif Button.RIGHT_DOWN in infrared_sensor.keypad():
+        #     yield BACKWARD
+        # else:
+        #     yield STOP # this somewhat helps for fluid motion between loops
 
-        # if relative_distance == None:
-        #     yield
-        # else: # that means that beacon is on
-        #     # Should these be declared here?
-        #     angle_error = 0 - angle
-        #     K_angle = 4
-        #     steering = K_angle * angle_error
-        #     action = Action(drive_speed=0, steering=steering)
-        #     print("Steering is {}, for angle of {}, with an error of {}".format(steering, angle, angle_error))
-        #     yield action
-        #     # if it's within a certain range, then translate 
-        #     # Adjust and tune later (Using a PD controller for now)
-        #     if angle_error < 10:
-        #         p_error = 100 - relative_distance
-        #         d_error = p_error - last_error/action_timer.time()
-        #         K_p = 9
-        #         K_d = 5
-        #         drive_speed = K_p * p_error + K_d * d_error
-        #         action = Action(drive_speed=drive_speed, steering=0)
-        #         print("Drive speed is {}, for rel dist of {}\n".format(drive_speed, relative_distance))
-        #         print("D_error is {} and Last error is {}\n".format(d_error, last_error))
-        #         last_error = p_error # Change names of variables?
-        #         if relative_distance < 10:
-        #             yield 
-        #         else: 
-        #             yield action
-        # Tune balancing parameters
-        # Backwards movement when its too close too?
+    # Beacon channel 2
+        relative_distance, angle = infrared_sensor.beacon(2)
+        action_timer.reset()
+        global prev_error # just seems like bad practice
 
-        # Further notes
+        if relative_distance == None:
+            yield
+        else: # that means that beacon is on
+            angle_error = 0 - angle
+            K_angle = 4
+            steering = K_angle * angle_error
+            action = Action(drive_speed=0, steering=steering)
+            yield action
+
+            # if it's within a certain range, then translate 
+            if angle_error < 10:
+                error = 100 - relative_distance
+                d_error = (error - prev_error)/action_timer.time()
+                K_p, K_d = 6, 2.5
+                
+                drive_speed = K_p * error + K_d * d_error
+                #
+                action = Action(drive_speed=drive_speed, steering=0)
+                prev_error = error 
+                if relative_distance < 10:
+                    yield STOP
+                else: 
+                    yield action
 
         # Also output this relative distance on display, after mapping
         # output in metres and maybe play a sound when something is getting
         # too close
-
 
 # if __name__ == "__main__":
 while 1: # So that you can try balancing again when it falls
@@ -217,8 +210,7 @@ while 1: # So that you can try balancing again when it falls
         wheel_angle += change - drive_speed * average_control_loop_period
         wheel_rate = sum(motor_position_change) / 4 / average_control_loop_period
 
-        # This is the main control feedback calculation..Tweak here
-        # 0.8, 28, 0.075, 0.12
+        # This is the main control feedback calculation
         output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate +
                                                 28 * robot_body_angle +
                                                 0.075 * wheel_rate +
@@ -245,17 +237,10 @@ while 1: # So that you can try balancing again when it falls
 
         # This runs update_action() until the next "yield" statement
         action = next(action_task)
-        # print("drive_speed = {}, steering = {}\n".format(action.drive_speed, action.steering))
         if action is not None:
             drive_speed, steering = action
         
-        # Make sure loop time is at least TARGET_LOOP_PERIOD. The output power
-        # calculation above depends on having a certain amount of time in each loop
-        # print("Average control loop period: {}\t".format(average_control_loop_period))
-        # print("Single loop time: {}\t".format(single_loop_timer.time()))
-        # print("Target loop time: {}\t".format(TARGET_LOOP_PERIOD))
         wait(TARGET_LOOP_PERIOD - single_loop_timer.time())
-        # print("Difference: {}\n".format(TARGET_LOOP_PERIOD - single_loop_timer.time()))
 
     # Handle falling over. If we get to this point in this program, it means
     # that the robot fell over
@@ -264,7 +249,6 @@ while 1: # So that you can try balancing again when it falls
     left_motor.stop()
     right_motor.stop()
 
-    # I might leave this in:
     # Knocked out eyes and red light let us know that the robot lost its balance
     ev3.light.on(Color.RED)
     ev3.screen.load_image(ImageFile.KNOCKED_OUT)
@@ -272,10 +256,3 @@ while 1: # So that you can try balancing again when it falls
 
     # Wait for a few seconds before trying to balance again.
     wait(3000) 
-
-    # Include a battery warning 7.5v
-    # Break code into bits?
-    # Mention the issue I had with the beacon button not mapping correctly; that's why I am controlling the robot that way. Need a diagram in the 
-    # readme showing the beacon mapping I used
-    # we are using keypad() instead of buttons() because keypad() only works on channel 1
-
