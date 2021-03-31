@@ -1,11 +1,5 @@
 #!/usr/bin/env pybricks-micropython
 
-"""
-# Document each section
-# Give credit to where due
-# Strive to get this project sent to ev3dev. No pressure, but something to strive for, keep pushing
-
-"""
 # Import packages
 from ucollections import namedtuple
 from pybricks.hubs import EV3Brick
@@ -19,20 +13,20 @@ ev3 = EV3Brick()
 # Initialize motors at port A and D
 right_motor, left_motor = Motor(Port.A), Motor(Port.D)
 
-# Initialize sensors
+# Initialize gyro and infrared sensors
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 
 # Initialize timers, to measure how long loops run for further optimization
-single_loop_timer = StopWatch() #
-control_loop_timer = StopWatch() #
-fall_timer = StopWatch() # 
-action_timer = StopWatch() #
+single_loop_timer = StopWatch()     #
+control_loop_timer = StopWatch()    #
+fall_timer = StopWatch()            # 
+action_timer = StopWatch()          #
 
-# Initialize constants
-GYRO_CALIBRATION_LOOP_COUNT = 200 #
-GYRO_OFFSET_FACTOR = 0.0005 # 0.0005 # Where is this from? can we tweak it or leave as it
-TARGET_LOOP_PERIOD = 20 # 15 milliseconds # what is this?
-prev_error = 0
+# Initialize program constants
+GYRO_CALIBRATION_LOOP_COUNT = 200   #
+GYRO_OFFSET_FACTOR = 0.0005         # gotten from gyroboy
+TARGET_LOOP_PERIOD = 20             # milliseconds # 
+prev_error = 0                      #
 
 """
 # "Robot motion/action definition"
@@ -40,82 +34,76 @@ prev_error = 0
 """
 Action = namedtuple('Action', ['drive_speed', 'steering'])
 
-# Pre-defined robot motions..play with speeds
+# Pre-defined robot motions
 STOP = Action(drive_speed=0, steering=0)
 FORWARD = Action(drive_speed=150, steering=0)
 BACKWARD = Action(drive_speed=-100, steering=0)
 TURN_RIGHT = Action(drive_speed=0, steering=80)
 TURN_LEFT = Action(drive_speed=0, steering=-80)
 
-# Adapt again
+""" 
+To ensure that no function calls are made that would otherwise affect the control loop time
+in the main program, those calls yield to the control loop while waiting for a certain thing to happen like this:
 
-# It is important that no blocking calls are made in this function, otherwise
-# it will affect the control loop time in the main program. Instead, we yield to 
-# the control loop while we are waiting for a certain thing to happen like this:
-
-#     while not condition:
-#         yield
+    while not condition:
+        yield
     
-# We also use yield to update the drive speed and steering values in the main control
-# loop:
+Yield is also used to update the drive speed and steering values in the main control loop:
 
-#     yield action
+    yield action
+"""
 
 def update_action():
     while 1:    
-    # Beacon channel 1
+    # Beacon channel 1 - directional controls of the robot using the beacon remote
 
     # Button.LEFT_UP - left
     # Button.LEFT_DOWN - right
     # Button.RIGHT_UP - forward 
     # Button.RIGHT_DOWN - backward
 
-        # We are using keypad() instead of buttons() because keypad() only works on channel 1
-        # also it cannot detect the beacon button.
+        if Button.LEFT_UP in infrared_sensor.keypad():
+            yield TURN_LEFT
+        elif Button.LEFT_DOWN in infrared_sensor.keypad():
+            yield TURN_RIGHT
+        elif Button.RIGHT_UP in infrared_sensor.keypad():
+            yield FORWARD
+        elif Button.RIGHT_DOWN in infrared_sensor.keypad():
+            yield BACKWARD
+        else:
+            yield STOP # this somewhat helps for fluid motion between loops
+    
+    # Comment beacon channel 1 and uncomment below to use beacon channel 2
+    # Beacon channel 2 ... explain what it does, using doc strings
+    
+        # relative_distance, angle = infrared_sensor.beacon(2)
+        # action_timer.reset()
+        # global prev_error # just seems like bad practice
 
-        # if Button.LEFT_UP in infrared_sensor.keypad():
-        #     yield TURN_LEFT
-        # elif Button.LEFT_DOWN in infrared_sensor.keypad():
-        #     yield TURN_RIGHT
-        # elif Button.RIGHT_UP in infrared_sensor.keypad():
-        #     yield FORWARD
-        # elif Button.RIGHT_DOWN in infrared_sensor.keypad():
-        #     yield BACKWARD
-        # else:
-        #     yield STOP # this somewhat helps for fluid motion between loops
+        # if relative_distance == None:
+        #     yield
+        # else: # that means that beacon is on
+        #     # Should these be declared here?
+        #     angle_error = 0 - angle
+        #     K_angle = 4
+        #     steering = K_angle * angle_error
+        #     action = Action(drive_speed=0, steering=steering)
+        #     yield action
 
-    # Beacon channel 2
-        relative_distance, angle = infrared_sensor.beacon(2)
-        action_timer.reset()
-        global prev_error # just seems like bad practice
-
-        if relative_distance == None:
-            yield
-        else: # that means that beacon is on
-            angle_error = 0 - angle
-            K_angle = 4
-            steering = K_angle * angle_error
-            action = Action(drive_speed=0, steering=steering)
-            yield action
-
-            # if it's within a certain range, then translate 
-            if angle_error < 10:
-                error = 100 - relative_distance
-                d_error = (error - prev_error)/action_timer.time()
-                K_p, K_d = 6, 2.5
+        #     # if it's within a certain range, then translate 
+        #     if angle_error < 10:
+        #         error = 100 - relative_distance
+        #         d_error = (error - prev_error)/action_timer.time()
+        #         K_p, K_d = 6, 2.5
                 
-                drive_speed = K_p * error + K_d * d_error
-                #
-                action = Action(drive_speed=drive_speed, steering=0)
-                prev_error = error 
-                if relative_distance < 10:
-                    yield STOP
-                else: 
-                    yield action
-
-        # Also output this relative distance on display, after mapping
-        # output in metres and maybe play a sound when something is getting
-        # too close
+        #         drive_speed = K_p * error + K_d * d_error
+        #         #
+        #         action = Action(drive_speed=drive_speed, steering=0)
+        #         prev_error = error 
+        #         if relative_distance < 10:
+        #             yield STOP
+        #         else: 
+        #             yield action
 
 # if __name__ == "__main__":
 while 1: # So that you can try balancing again when it falls
@@ -138,8 +126,7 @@ while 1: # So that you can try balancing again when it falls
     control_loop_counter = 0
     robot_body_angle = -0.2
 
-    # Since update_action() is a generator (it uses "yield" instead of
-    # "return") this doesn't actually run update_action() right now but
+    # Since update_action() is a generator (it uses "yield" instead of "return") this doesn't actually run update_action() right now but
     # rather prepares it for use later.
     action_task = update_action()
 
@@ -240,6 +227,8 @@ while 1: # So that you can try balancing again when it falls
         if action is not None:
             drive_speed, steering = action
         
+        # Make sure loop time is at least TARGET_LOOP_PERIOD. The output power
+        # calculation above depends on having a certain amount of time in each loop. What??
         wait(TARGET_LOOP_PERIOD - single_loop_timer.time())
 
     # Handle falling over. If we get to this point in this program, it means
@@ -249,10 +238,14 @@ while 1: # So that you can try balancing again when it falls
     left_motor.stop()
     right_motor.stop()
 
-    # Knocked out eyes and red light let us know that the robot lost its balance
+    # Knocked out eyes and red light let us know that the robot lost its balance LEAVE? OR TAKE OUT?
     ev3.light.on(Color.RED)
     ev3.screen.load_image(ImageFile.KNOCKED_OUT)
     ev3.speaker.play_file(SoundFile.SPEED_DOWN)
 
     # Wait for a few seconds before trying to balance again.
     wait(3000) 
+
+    # Include a battery warning 7.5v
+    # ev3.speaker.play_file(SoundFile.UH_OH)
+    # ev3.battery.voltage() # Gets the voltage of the battery
