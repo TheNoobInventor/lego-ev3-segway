@@ -4,7 +4,12 @@ README file to be updated.
 
 Using ev3dev OS to self-balance a Lego Mindstorms EV3 robot. 
 
-## Future upgrades
+
+# Building the Segway robot
+
+The Segway robot was build following this [guide](https://robotsquare.com/2014/07/01/tutorial-ev3-self-balancing-robot/)
+
+## Future work
 
 Upgrades to channel two: 
 if an obstacle is in its way, it will have to go back and turn left or right and proceed onto the driving to the beacon
