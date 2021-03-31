@@ -1,6 +1,6 @@
 # lego-ev3-segway
 
-README file to be updated.
+(To be completed)
 
 Using ev3dev OS to self-balance a Lego Mindstorms EV3 robot. 
 
