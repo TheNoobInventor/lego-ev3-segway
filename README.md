@@ -7,7 +7,7 @@ Using ev3dev OS to self-balance a Lego Mindstorms EV3 robot.
 
 # Building the Segway robot
 
-The Segway robot was build following this [guide](https://robotsquare.com/2014/07/01/tutorial-ev3-self-balancing-robot/).
+The Segway robot was built following this [guide](https://robotsquare.com/2014/07/01/tutorial-ev3-self-balancing-robot/).
 
 <p align="center">
   <img src=images/ev3_segway.jpg>
