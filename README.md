@@ -23,6 +23,10 @@ if an obstacle is in its way, it will have to go back and turn left or right and
 
 Combine channels 3 and 4?
 
+Note about some intermittent errors running the program - what error and how to fix it.
+
+Occasional delay when calibrating gyro sensor. Why?
+
 ## Reference
 
 https://pybricks.github.io/ev3-micropython/examples/gyro_boy.html
