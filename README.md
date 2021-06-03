@@ -27,6 +27,8 @@ Note about some intermittent errors running the program - what error and how to 
 
 Occasional delay when calibrating gyro sensor. Why?
 
+Issue with my remote - code not picking up two or more button presses correctly with repeatability.
+
 ## Reference
 
 https://pybricks.github.io/ev3-micropython/examples/gyro_boy.html
