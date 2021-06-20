@@ -4,14 +4,16 @@
 from ucollections import namedtuple
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, InfraredSensor, GyroSensor
-from pybricks.parameters import Port, Color, ImageFile, SoundFile, Button
+from pybricks.parameters import Port, Color, Button
+#from pybricks.parameters import Port, Color, ImageFile, Button
+from pybricks.media.ev3dev import SoundFile, ImageFile
 from pybricks.tools import wait, StopWatch
 
 # Initialize the EV3 brick
 ev3 = EV3Brick()
 
-# Initialize motors at port A and D
-right_motor, left_motor = Motor(Port.A), Motor(Port.D)
+# Initialize motors at port A and C
+right_motor, left_motor = Motor(Port.A), Motor(Port.C)
 
 # Initialize gyro and infrared sensors
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
@@ -24,8 +26,8 @@ action_timer = StopWatch()          #
 
 # Initialize program constants
 GYRO_CALIBRATION_LOOP_COUNT = 200   #
-GYRO_OFFSET_FACTOR = 0.0005         # gotten from gyroboy
-TARGET_LOOP_PERIOD = 20             # milliseconds # 
+GYRO_OFFSET_FACTOR = 0.0005         # obtained from GyroBoy project
+TARGET_LOOP_PERIOD = 20             # milliseconds 
 prev_error = 0                      #
 
 """
@@ -62,48 +64,49 @@ def update_action():
     # Button.RIGHT_UP - forward 
     # Button.RIGHT_DOWN - backward
 
-        if Button.LEFT_UP in infrared_sensor.keypad():
-            yield TURN_LEFT
-        elif Button.LEFT_DOWN in infrared_sensor.keypad():
-            yield TURN_RIGHT
-        elif Button.RIGHT_UP in infrared_sensor.keypad():
-            yield FORWARD
-        elif Button.RIGHT_DOWN in infrared_sensor.keypad():
-            yield BACKWARD
-        else:
-            yield STOP # this somewhat helps for fluid motion between loops
-    
+        # if Button.LEFT_UP in infrared_sensor.keypad():
+        #     yield TURN_LEFT
+        # elif Button.LEFT_DOWN in infrared_sensor.keypad():
+        #     yield TURN_RIGHT
+        # elif Button.RIGHT_UP in infrared_sensor.keypad():
+        #     yield FORWARD
+        # elif Button.RIGHT_DOWN in infrared_sensor.keypad():
+        #     yield BACKWARD
+        # else:
+        #     yield STOP 
+
     # Comment beacon channel 1 and uncomment below to use beacon channel 2
+
     # Beacon channel 2 ... explain what it does, using doc strings
     
-        # relative_distance, angle = infrared_sensor.beacon(2)
-        # action_timer.reset()
-        # global prev_error # just seems like bad practice
+        relative_distance, angle = infrared_sensor.beacon(2)
+        action_timer.reset()
+        global prev_error 
 
-        # if relative_distance == None:
-        #     yield
-        # else: # that means that beacon is on
-        #     # Should these be declared here?
-        #     angle_error = 0 - angle
-        #     K_angle = 4
-        #     steering = K_angle * angle_error
-        #     action = Action(drive_speed=0, steering=steering)
-        #     yield action
+        if relative_distance == None:
+            yield
+        else: # that means that beacon is on
+            # Should these be declared here?
+            angle_error = 0 - angle
+            K_angle = 4
+            steering = K_angle * angle_error
+            action = Action(drive_speed=0, steering=steering)
+            yield action
 
-        #     # if it's within a certain range, then translate 
-        #     if angle_error < 10:
-        #         error = 100 - relative_distance
-        #         d_error = (error - prev_error)/action_timer.time()
-        #         K_p, K_d = 6, 2.5
+            # if it's within a certain range, then translate 
+            if angle_error < 10:
+                error = 100 - relative_distance
+                d_error = (error - prev_error)/action_timer.time()
+                K_p, K_d = 6, 2.5
                 
-        #         drive_speed = K_p * error + K_d * d_error
-        #         #
-        #         action = Action(drive_speed=drive_speed, steering=0)
-        #         prev_error = error 
-        #         if relative_distance < 10:
-        #             yield STOP
-        #         else: 
-        #             yield action
+                drive_speed = K_p * error + K_d * d_error
+                #
+                action = Action(drive_speed=drive_speed, steering=0)
+                prev_error = error 
+                if relative_distance < 10:
+                    yield STOP
+                else: 
+                    yield action
 
 # if __name__ == "__main__":
 while 1: # So that you can try balancing again when it falls
@@ -210,8 +213,8 @@ while 1: # So that you can try balancing again when it falls
             output_power = -100
  
         # Drive motors
-        left_motor.dc(output_power - 0.1 * steering) # why minus? 
-        right_motor.dc(output_power + 0.1 * steering) # why plus?
+        left_motor.dc(output_power - 0.1 * steering) 
+        right_motor.dc(output_power + 0.1 * steering)
 
         # Adapt
         # Check if robot fell down. If the output speed is +/-100% for more
@@ -226,7 +229,12 @@ while 1: # So that you can try balancing again when it falls
         action = next(action_task)
         if action is not None:
             drive_speed, steering = action
-        
+
+        # Battery warning for voltage less than 7.5V
+	battery_voltage = (ev3.battery.voltage())/1000
+	if battery_voltage < 7.5:
+	    ev3.speaker.play_file(SoundFile.UH_OH)
+
         # Make sure loop time is at least TARGET_LOOP_PERIOD. The output power
         # calculation above depends on having a certain amount of time in each loop. What??
         wait(TARGET_LOOP_PERIOD - single_loop_timer.time())
@@ -238,14 +246,10 @@ while 1: # So that you can try balancing again when it falls
     left_motor.stop()
     right_motor.stop()
 
-    # Knocked out eyes and red light let us know that the robot lost its balance LEAVE? OR TAKE OUT?
+    # Knocked out eyes and red light let us know that the robot lost its balance
     ev3.light.on(Color.RED)
     ev3.screen.load_image(ImageFile.KNOCKED_OUT)
     ev3.speaker.play_file(SoundFile.SPEED_DOWN)
 
     # Wait for a few seconds before trying to balance again.
     wait(3000) 
-
-    # Include a battery warning 7.5v
-    # ev3.speaker.play_file(SoundFile.UH_OH)
-    # ev3.battery.voltage() # Gets the voltage of the battery
