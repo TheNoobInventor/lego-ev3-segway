@@ -1,5 +1,5 @@
 site_name: Lego EV3 Segway
-site_url: ''
+site_url: 'https://thenoobinventor.github.io/lego-ev3-segway/'
 use_directory_urls: False
 
 theme:
@@ -15,6 +15,12 @@ theme:
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - toc.integrate
 repo_url: https://github.com/TheNoobInventor/lego-ev3-segway
 repo_name: TheNoobInventor/lego-ev3-segway
 plugins:
