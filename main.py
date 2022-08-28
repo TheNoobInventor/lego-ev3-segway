@@ -1,11 +1,21 @@
 #!/usr/bin/env pybricks-micropython
 
+'''
+This program balances the Lego Mindstorms Segway robot built using the LEGO Mindstorms Ev3 home edition and a gyroscopic sensor. 
+The robot makes use of an infrared sensor and beacon remote to have two control modes:
+
+- to control the robot movement while it is balancing and 
+
+- to follow the beacon remote as it is moved around in the range of the infrared sensor, also as the robot is 
+  balancing.
+
+'''
+
 # Import packages
 from ucollections import namedtuple
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, InfraredSensor, GyroSensor
 from pybricks.parameters import Port, Color, Button
-#from pybricks.parameters import Port, Color, ImageFile, Button
 from pybricks.media.ev3dev import SoundFile, ImageFile
 from pybricks.tools import wait, StopWatch
 
@@ -18,17 +28,17 @@ right_motor, left_motor = Motor(Port.A), Motor(Port.C)
 # Initialize gyro and infrared sensors
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 
-# Initialize timers, to measure how long loops run for further optimization
-single_loop_timer = StopWatch()     #
-control_loop_timer = StopWatch()    #
-fall_timer = StopWatch()            # 
-action_timer = StopWatch()          #
+# Initialize timers
+single_loop_timer = StopWatch()     
+control_loop_timer = StopWatch()    
+fall_timer = StopWatch()             
+action_timer = StopWatch()          
 
 # Initialize program constants
-GYRO_CALIBRATION_LOOP_COUNT = 200   #
-GYRO_OFFSET_FACTOR = 0.0005         # obtained from GyroBoy project
-TARGET_LOOP_PERIOD = 20             # milliseconds 
-prev_error = 0                      #
+GYRO_CALIBRATION_LOOP_COUNT = 200   # Number of iterations for gyro calibration
+GYRO_OFFSET_FACTOR = 0.0005         # Gyro offset factor (obtained from GyroBoy project)
+TARGET_LOOP_PERIOD = 20             # 20 milliseconds 
+prev_error = 0                      # Initial ... error
 
 """
 # "Robot motion/action definition"
@@ -232,8 +242,9 @@ while 1: # So that you can try balancing again when it falls
 
         # Battery warning for voltage less than 7.5V
 	battery_voltage = (ev3.battery.voltage())/1000
-	if battery_voltage < 7.5:
-	    ev3.speaker.play_file(SoundFile.UH_OH)
+	
+    if battery_voltage < 7.5:
+        ev3.speaker.play_file(SoundFile.UH_OH)
 
         # Make sure loop time is at least TARGET_LOOP_PERIOD. The output power
         # calculation above depends on having a certain amount of time in each loop. What??
