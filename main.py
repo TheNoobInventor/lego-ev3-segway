@@ -169,18 +169,15 @@ while 1: # So that you can try balancing again when it falls
 
     # Balancing loop
     while 1:
-        # Adapt this in my own words:
         # This timer measures how long a single loop takes. This will be
         # used to help keep the loop time consistent, even when different
         # actions are happening.
         single_loop_timer.reset()
 
-        # Again, adapt in my own words:
         # This calculates the average control loop period. This is used in
         # the control feedback calculation instead of the single loop time
         # to filter out random fluctuations
         if control_loop_counter == 0:
-            # Adapt:
             # The first time through the loop, we need to assign a value to 
             # avoid dividing by zero later. 
 
@@ -226,7 +223,6 @@ while 1: # So that you can try balancing again when it falls
         left_motor.dc(output_power - 0.1 * steering) 
         right_motor.dc(output_power + 0.1 * steering)
 
-        # Adapt
         # Check if robot fell down. If the output speed is +/-100% for more
         # than one second, we know that we are no longer balancing properly.
 
@@ -241,7 +237,7 @@ while 1: # So that you can try balancing again when it falls
             drive_speed, steering = action
 
         # Battery warning for voltage less than 7.5V
-	battery_voltage = (ev3.battery.voltage())/1000
+        battery_voltage = (ev3.battery.voltage())/1000
 	
     if battery_voltage < 7.5:
         ev3.speaker.play_file(SoundFile.UH_OH)
