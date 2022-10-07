@@ -40,6 +40,11 @@ GYRO_OFFSET_FACTOR = 0.0005         # Gyro offset factor (obtained from GyroBoy 
 TARGET_LOOP_PERIOD = 20             # 20 milliseconds
 prev_error = 0                      # Initial ... error
 
+
+# 
+file = 'gyro_values.txt'
+f = open(file, 'a')
+
 """
 # "Robot motion/action definition"
 # Actions will be used to change which way the robot drives.
@@ -138,9 +143,6 @@ while 1: # So that you can try balancing again when it falls
     drive_speed, steering = 0, 0
     control_loop_counter = 0
     robot_body_angle = -0.2
-
-    file = 'gyro_values.txt'
-    f = open(file, 'a')
 
     # Since update_action() is a generator (it uses "yield" instead of "return") this doesn't actually run update_action() right now but
     # rather prepares it for use later.
