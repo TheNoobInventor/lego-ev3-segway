@@ -154,8 +154,6 @@ while 1: # So that you can try balancing again when it falls
         gyro_sum = 0
         for _ in range(GYRO_CALIBRATION_LOOP_COUNT): # loop variable
             gyro_sensor_value = gyro_sensor.speed()
-            f.write(str(gyro_sensor_value))
-            f.write('\n')
             gyro_sum += gyro_sensor_value
             if gyro_sensor_value > gyro_max_rate:
                 gyro_max_rate = gyro_sensor_value
@@ -163,6 +161,9 @@ while 1: # So that you can try balancing again when it falls
                 gyro_min_rate = gyro_sensor_value
             wait(5)
         if gyro_max_rate - gyro_min_rate < 2: # Understand the sign notation used and comment on it
+            f.write('Gyro max rate' + str(gyro_max_rate))
+            f.write('/n')
+            f.write('Gyro min rate' + str(gyro_min_rate))
             f.close()
             break
     # Therefore, initial offset is
