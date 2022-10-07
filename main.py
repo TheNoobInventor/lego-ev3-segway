@@ -43,7 +43,7 @@ prev_error = 0                      # Initial ... error
 
 # 
 file = 'gyro_values.txt'
-f = open(file, 'a')
+f = open(file, 'w')
 
 """
 # "Robot motion/action definition"
