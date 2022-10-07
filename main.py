@@ -140,6 +140,7 @@ while 1: # So that you can try balancing again when it falls
     robot_body_angle = -0.2
 
     file = 'gyro_values.txt'
+    f = open(file, 'a')
 
     # Since update_action() is a generator (it uses "yield" instead of "return") this doesn't actually run update_action() right now but
     # rather prepares it for use later.
@@ -149,7 +150,6 @@ while 1: # So that you can try balancing again when it falls
         # Calibrate gyro offset - explain what's going on here
         gyro_min_rate, gyro_max_rate = 440, -440 # deg/s
         gyro_sum = 0
-        f = open(file, 'a')
         for _ in range(GYRO_CALIBRATION_LOOP_COUNT): # loop variable
             gyro_sensor_value = gyro_sensor.speed()
             f.write(gyro_sensor)
