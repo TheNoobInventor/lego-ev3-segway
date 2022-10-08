@@ -130,6 +130,8 @@ while 1: # So that you can try balancing again when it falls
     battery_voltage = (ev3.battery.voltage())/1000
 
     if battery_voltage < 7.5:
+        ev3.light.on(Color.ORANGE)
+        ev3.screen.load_image(ImageFile.DIZZY)
         ev3.speaker.play_file(SoundFile.UH_OH)
         break
 
@@ -179,7 +181,7 @@ while 1: # So that you can try balancing again when it falls
     print("Out of gyro loop")
 
     # Awake eyes and green light let us know that the robot is ready to go!
-    # ev3.speaker.play_file(SoundFile.SPEED_UP)
+    ev3.speaker.play_file(SoundFile.SPEED_UP)
     ev3.screen.load_image(ImageFile.AWAKE)
     ev3.light.on(Color.GREEN)
     wait(500)
