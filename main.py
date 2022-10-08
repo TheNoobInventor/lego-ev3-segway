@@ -168,11 +168,11 @@ while 1: # So that you can try balancing again when it falls
                 gyro_max_rate = gyro_sensor_value
             if gyro_sensor_value < gyro_min_rate:
                 gyro_min_rate = gyro_sensor_value
+            f.write('Gyro max rate ' + str(gyro_max_rate))
+            f.write('\t Gyro min rate ' + str(gyro_min_rate))
+            f.write('\n')
             wait(5)
         if gyro_max_rate - gyro_min_rate < 2: # Understand the sign notation used and comment on it
-            f.write('Gyro max rate ' + str(gyro_max_rate))
-            f.write('\n')
-            f.write('Gyro min rate ' + str(gyro_min_rate))
             f.close()
             break
 
