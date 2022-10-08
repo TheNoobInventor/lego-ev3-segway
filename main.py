@@ -126,6 +126,13 @@ def update_action():
 # if __name__ == "__main__":
 while 1: # So that you can try balancing again when it falls
 
+    # Battery warning for voltage less than 7.5V
+    battery_voltage = (ev3.battery.voltage())/1000
+
+    if battery_voltage < 7.5:
+        ev3.speaker.play_file(SoundFile.UH_OH)
+        break
+
     # Sleeping eyes and light off let us know that the robot is waiting for
     # any movement to stop before the program can continue
     ev3.screen.load_image(ImageFile.SLEEPING)
@@ -161,11 +168,12 @@ while 1: # So that you can try balancing again when it falls
                 gyro_min_rate = gyro_sensor_value
             wait(5)
         if gyro_max_rate - gyro_min_rate < 2: # Understand the sign notation used and comment on it
-            f.write('Gyro max rate' + str(gyro_max_rate))
-            f.write('/n')
-            f.write('Gyro min rate' + str(gyro_min_rate))
+            f.write('Gyro max rate ' + str(gyro_max_rate))
+            f.write('\n')
+            f.write('Gyro min rate ' + str(gyro_min_rate))
             f.close()
             break
+
     # Therefore, initial offset is
     gyro_offset = gyro_sum / GYRO_CALIBRATION_LOOP_COUNT
     print("Out of gyro loop")
@@ -245,11 +253,6 @@ while 1: # So that you can try balancing again when it falls
         if action is not None:
             drive_speed, steering = action
 
-        # Battery warning for voltage less than 7.5V
-        battery_voltage = (ev3.battery.voltage())/1000
-
-        if battery_voltage < 7.5:
-            ev3.speaker.play_file(SoundFile.UH_OH)
 
         # Make sure loop time is at least TARGET_LOOP_PERIOD. The output power
         # calculation above depends on having a certain amount of time in each loop. #
