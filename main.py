@@ -1,7 +1,7 @@
 #!/usr/bin/env pybricks-micropython
 
 '''
-This program balances the Lego Mindstorms Segway robot built using the LEGO Mindstorms Ev3 home edition and a gyroscopic sensor.
+This program balances the Lego Mindstorms Segway robot built using the LEGO Mindstorms EV3 home edition and a gyroscopic sensor.
 The robot makes use of an infrared sensor and beacon remote to have two control modes:
 
 - to control the robot movement while it is balancing and
@@ -17,7 +17,7 @@ from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, InfraredSensor, GyroSensor
 from pybricks.parameters import Port, Color, Button
 from pybricks.media.ev3dev import SoundFile, ImageFile
-from pybricks.tools import wait, StopWatch
+from pybricks.tools import wait, StopWatch, DataLog
 
 # Initialize the EV3 brick
 ev3 = EV3Brick()
@@ -28,22 +28,22 @@ right_motor, left_motor = Motor(Port.A), Motor(Port.C)
 # Initialize gyro and infrared sensors
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 
+# Create data log file
+left_wheel_data = DataLog('left wheel velocity', 'time')
+right_wheel_data = DataLog('right wheel velocity', 'time')
+
 # Initialize timers
 single_loop_timer = StopWatch()
 control_loop_timer = StopWatch()
 fall_timer = StopWatch()
 action_timer = StopWatch()
+data_timer = StopWatch()
 
 # Initialize program constants
 GYRO_CALIBRATION_LOOP_COUNT = 200   # Number of iterations for gyro calibration
 GYRO_OFFSET_FACTOR = 0.0005         # Gyro offset factor (obtained from GyroBoy project)
 TARGET_LOOP_PERIOD = 20             # 20 milliseconds
 prev_error = 0                      # Initial ... error
-
-
-# 
-file = 'gyro_values.txt'
-f = open(file, 'w')
 
 """
 # "Robot motion/action definition"
@@ -168,12 +168,9 @@ while 1: # So that you can try balancing again when it falls
                 gyro_max_rate = gyro_sensor_value
             if gyro_sensor_value < gyro_min_rate:
                 gyro_min_rate = gyro_sensor_value
-            f.write('Gyro max rate ' + str(gyro_max_rate))
-            f.write('\t Gyro min rate ' + str(gyro_min_rate))
-            f.write('\n')
+
             wait(5)
         if gyro_max_rate - gyro_min_rate < 2: # Understand the sign notation used and comment on it
-            f.close()
             break
 
     # Therefore, initial offset is
@@ -209,7 +206,8 @@ while 1: # So that you can try balancing again when it falls
 
         # Calculate robot body angle and speed...explain in detail
         gyro_sensor_value = gyro_sensor.speed()
-        # Recursive filter...elaborate
+
+        # Low pass filter
         gyro_offset *= (1 - GYRO_OFFSET_FACTOR)
         gyro_offset += GYRO_OFFSET_FACTOR * gyro_sensor_value
         robot_body_rate = gyro_sensor_value - gyro_offset
@@ -217,6 +215,13 @@ while 1: # So that you can try balancing again when it falls
 
         # Calculate wheel angle and speed ...explain in detail
         left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
+
+        # Log data (Rename variables later on)
+        time = data_timer.time()
+        left_wheel_data.log(left_motor_angle, time)
+        right_wheel_data.log(right_motor_angle, time)
+
+        # Calculate wheel angle and speed ...explain in detail
         previous_motor_sum = motor_position_sum
         motor_position_sum = left_motor_angle + right_motor_angle
         change = motor_position_sum - previous_motor_sum
