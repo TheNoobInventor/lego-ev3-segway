@@ -215,11 +215,12 @@ while 1: # So that you can try balancing again when it falls
 
         # Calculate wheel angle and speed ...explain in detail
         left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
+        left_motor_speed, right_motor_speed = left_motor.speed(), right_motor.speed()
 
         # Log data (Rename variables later on)
         time = data_timer.time()
-        left_wheel_data.log(left_motor_angle, time)
-        right_wheel_data.log(right_motor_angle, time)
+        left_wheel_data.log(left_motor_speed, time)
+        right_wheel_data.log(right_motor_speed, time)
 
         # Calculate wheel angle and speed ...explain in detail
         previous_motor_sum = motor_position_sum
