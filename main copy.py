@@ -18,8 +18,6 @@ from pybricks.ev3devices import Motor, InfraredSensor, GyroSensor
 from pybricks.parameters import Port, Color, Button
 from pybricks.media.ev3dev import SoundFile, ImageFile
 from pybricks.tools import wait, StopWatch, DataLog
-import numpy as np
-from numpy.linalg import inv
 
 # Initialize the EV3 brick
 ev3 = EV3Brick()
