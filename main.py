@@ -17,9 +17,7 @@ from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, InfraredSensor, GyroSensor
 from pybricks.parameters import Port, Color, Button
 from pybricks.media.ev3dev import SoundFile, ImageFile
-from pybricks.tools import wait, StopWatch, DataLog
-import numpy as np
-from numpy.linalg import inv
+from pybricks.tools import wait, StopWatch
 
 # Initialize the EV3 brick
 ev3 = EV3Brick()
@@ -30,16 +28,11 @@ right_motor, left_motor = Motor(Port.A), Motor(Port.C)
 # Initialize gyro and infrared sensors
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 
-# Create data log file
-left_wheel_data = DataLog('time', 'left wheel velocity')
-right_wheel_data = DataLog('time', 'right wheel velocity')
-
 # Initialize timers
 single_loop_timer = StopWatch()
 control_loop_timer = StopWatch()
 fall_timer = StopWatch()
 action_timer = StopWatch()
-data_timer = StopWatch()
 
 # Initialize program constants
 GYRO_CALIBRATION_LOOP_COUNT = 200   # Number of iterations for gyro calibration
@@ -217,12 +210,6 @@ while 1: # So that you can try balancing again when it falls
 
         # Calculate wheel angle and speed ...explain in detail
         left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
-        left_motor_speed, right_motor_speed = left_motor.speed(), right_motor.speed()
-
-        # Log data (Rename variables later on)
-        time = data_timer.time()
-        left_wheel_data.log(left_motor_speed, time)
-        right_wheel_data.log(right_motor_speed, time)
 
         # Calculate wheel angle and speed ...explain in detail
         previous_motor_sum = motor_position_sum
