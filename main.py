@@ -222,7 +222,7 @@ while 1: # So that you can try balancing again when it falls
 
         # Kalman filter
         kalman_gain = process_error / (process_error + measurement_error)
-        process_estimate = process_error + kalman_gain (gyro_sensor_value - process_estimate)
+        process_estimate = process_error + kalman_gain * (gyro_sensor_value - process_estimate)
         process_error = (1 - kalman_gain) * process_error
 
         # Log filter data
