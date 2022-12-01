@@ -29,8 +29,7 @@ right_motor, left_motor = Motor(Port.A), Motor(Port.C)
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 
 # Data log 
-low_pass_filter = DataLog('time','low pass gyro', name='low_pass_filter', extensions='csv', timestamp='False')
-kalman_filter = DataLog('time','kalman gyro',name='low_pass_filter', extensions='csv', timestamp='False')
+filtered_speed = DataLog('time','low pass gyro','kalman gyro', name='filtered_speed', extensions='csv', timestamp='False')
 
 # Initialize timers
 single_loop_timer = StopWatch()
@@ -183,6 +182,14 @@ while 1: # So that you can try balancing again when it falls
     ev3.light.on(Color.GREEN)
     wait(500)
 
+    # Kalman initial conditions for gyro
+    measurement_error = 1e-5        # Error in the measurement, assumed to be unchanging
+    process_error = 1e-8            # Error in the estimate or process
+    process_estimate = 0            # Process estimate
+
+    # Reset data timer
+    data_timer.reset()
+
     # Balancing loop
     while 1:
         # This timer measures how long a single loop takes. This will be
@@ -212,6 +219,14 @@ while 1: # So that you can try balancing again when it falls
         gyro_offset += GYRO_OFFSET_FACTOR * gyro_sensor_value
         robot_body_rate = gyro_sensor_value - gyro_offset
         robot_body_angle += robot_body_rate * average_control_loop_period
+
+        # Kalman filter
+        kalman_gain = process_error / (process_error + measurement_error)
+        process_estimate = process_error + kalman_gain (gyro_sensor_value - process_estimate)
+        process_error = (1 - kalman_gain) * process_error
+
+        # Log filter data
+        filtered_speed.log(data_timer.time(), robot_body_rate, process_estimate) # rename later
 
         # Calculate wheel angle and speed ...explain in detail
         left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
