@@ -17,7 +17,7 @@ from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, InfraredSensor, GyroSensor
 from pybricks.parameters import Port, Color, Button
 from pybricks.media.ev3dev import SoundFile, ImageFile
-from pybricks.tools import wait, StopWatch
+from pybricks.tools import wait, StopWatch, DataLog
 
 # Initialize the EV3 brick
 ev3 = EV3Brick()
@@ -28,11 +28,17 @@ right_motor, left_motor = Motor(Port.A), Motor(Port.C)
 # Initialize gyro and infrared sensors
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 
+# Data log 
+raw_gyro = DataLog('time','raw gyro')
+low_pass_filter = DataLog('time','low pass gyro')
+kalman_filter = DataLog('time','kalman gyro')
+
 # Initialize timers
 single_loop_timer = StopWatch()
 control_loop_timer = StopWatch()
 fall_timer = StopWatch()
 action_timer = StopWatch()
+data_timer = StopWatch()
 
 # Initialize program constants
 GYRO_CALIBRATION_LOOP_COUNT = 200   # Number of iterations for gyro calibration
@@ -220,6 +226,9 @@ while 1: # So that you can try balancing again when it falls
 
         wheel_angle += change - drive_speed * average_control_loop_period
         wheel_rate = sum(motor_position_change) / 4 / average_control_loop_period
+
+        # DECIDE, KALMAN FOR WHEEL_ANGLE OR WHEEL_RATE? IT CAN ONLY BE ONE. MAYBE DO BOTH SEPARATELY AND SEE
+        # WHICH ONE IS SMOOTHED OUT THE BEST 
 
         # This is the main control feedback calculation
         output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate +
