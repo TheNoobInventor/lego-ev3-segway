@@ -16,7 +16,6 @@ ev3 = EV3Brick()
 
 # Initialize gyro sensor
 gyro_sensor = GyroSensor(Port.S2)
-gyro_speed = gyro_sensor.speed()
 
 raw_gyro = DataLog('time','raw gyro', name='raw_gyro_data', extension='csv', timestamp=False) # data log
 data_timer = StopWatch() # timer
@@ -33,6 +32,9 @@ try:
     data_timer.reset()
 
     while True:
+        # Obtain latest gyro reading
+        gyro_speed = gyro_sensor.speed()
+
         # Log data
         raw_gyro.log(data_timer.time(), gyro_speed)
 
