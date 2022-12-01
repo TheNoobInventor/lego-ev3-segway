@@ -18,7 +18,7 @@ ev3 = EV3Brick()
 gyro_sensor = GyroSensor(Port.S2)
 gyro_speed = gyro_sensor.speed()
 
-raw_gyro = DataLog('time','raw gyro') # data log
+raw_gyro = DataLog('time','raw gyro', name='raw_gyro_data', extension='csv', timestamp=False) # data log
 data_timer = StopWatch() # timer
 
 try:
@@ -34,7 +34,7 @@ try:
 
     while True:
         # Log data
-        raw_gyro.log(gyro_speed, data_timer.time())
+        raw_gyro.log(data_timer.time(), gyro_speed)
 
 except KeyboardInterrupt:
     ev3.light.on(Color.RED)
@@ -42,3 +42,4 @@ except KeyboardInterrupt:
     ev3.speaker.play_file(SoundFile.SPEED_DOWN)
 
 # Adjust program intro to include raw wheel data if doing that as well
+# Comments, comments

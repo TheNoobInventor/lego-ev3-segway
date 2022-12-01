@@ -29,9 +29,8 @@ right_motor, left_motor = Motor(Port.A), Motor(Port.C)
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 
 # Data log 
-raw_gyro = DataLog('time','raw gyro')
-low_pass_filter = DataLog('time','low pass gyro')
-kalman_filter = DataLog('time','kalman gyro')
+low_pass_filter = DataLog('time','low pass gyro', name='low_pass_filter', extensions='csv', timestamp='False')
+kalman_filter = DataLog('time','kalman gyro',name='low_pass_filter', extensions='csv', timestamp='False')
 
 # Initialize timers
 single_loop_timer = StopWatch()
