@@ -183,7 +183,7 @@ while 1: # So that you can try balancing again when it falls
     wait(500)
 
     # Kalman initial conditions for gyro
-    measurement_error = 0.5 # 0.005 #1e-5        # Error in the measurement, assumed to be unchanging
+    measurement_error = 3 # 0.5 # 0.005 #1e-5        # Error in the measurement, assumed to be unchanging
     process_error = 4 #1e-2 #1e-8            # Error in the estimate or process
     process_estimate = 0            # Process estimate
 
