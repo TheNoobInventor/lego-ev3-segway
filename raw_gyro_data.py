@@ -14,8 +14,9 @@ from pybricks.tools import wait, DataLog, StopWatch
 # Initialize the EV3 brick
 ev3 = EV3Brick()
 
-# Initialize gyro and infrared sensors
-gyro_sensor, infrared_sensor = GyroSensor(Port.S2)
+# Initialize gyro sensor
+gyro_sensor = GyroSensor(Port.S2)
+gyro_speed = gyro_sensor.speed()
 
 raw_gyro = DataLog('time','raw gyro') # data log
 data_timer = StopWatch() # timer
@@ -30,7 +31,7 @@ while True:
         # Reset timer and start writing data to csv file
         data_timer.reset()
 
-        raw_gyro.log(gyro_sensor.speed(), data_timer.time())
+        raw_gyro.log(gyro_speed, data_timer.time())
 
     except KeyboardInterrupt:
         ev3.light.on(Color.RED)
