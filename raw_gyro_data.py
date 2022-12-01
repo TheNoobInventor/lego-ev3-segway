@@ -21,8 +21,8 @@ gyro_speed = gyro_sensor.speed()
 raw_gyro = DataLog('time','raw gyro') # data log
 data_timer = StopWatch() # timer
 
-while True:
-    try:
+try:
+    while True:
         ev3.screen.load_image(ImageFile.SLEEPING)
         wait(3000) # wait 3 seconds
         ev3.screen.load_image(ImageFile.AWAKE)
@@ -33,9 +33,9 @@ while True:
 
         raw_gyro.log(gyro_speed, data_timer.time())
 
-    except KeyboardInterrupt:
-        ev3.light.on(Color.RED)
-        ev3.screen.load_image(ImageFile.KNOCKED_OUT)
-        ev3.speaker.play_file(SoundFile.SPEED_DOWN)
+except KeyboardInterrupt:
+    ev3.light.on(Color.RED)
+    ev3.screen.load_image(ImageFile.KNOCKED_OUT)
+    ev3.speaker.play_file(SoundFile.SPEED_DOWN)
 
 # Adjust program intro to include raw wheel data if doing that as well
