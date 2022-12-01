@@ -22,15 +22,15 @@ raw_gyro = DataLog('time','raw gyro') # data log
 data_timer = StopWatch() # timer
 
 try:
+    # Reset timer
+    data_timer.reset()
+    ev3.screen.load_image(ImageFile.SLEEPING)
+    wait(3000) # wait 3 seconds
+    ev3.screen.load_image(ImageFile.AWAKE)
+    ev3.light.on(Color.GREEN)
+
     while True:
-        ev3.screen.load_image(ImageFile.SLEEPING)
-        wait(3000) # wait 3 seconds
-        ev3.screen.load_image(ImageFile.AWAKE)
-        ev3.light.on(Color.GREEN)
-
-        # Reset timer and start writing data to csv file
-        data_timer.reset()
-
+        # Log data
         raw_gyro.log(gyro_speed, data_timer.time())
 
 except KeyboardInterrupt:
