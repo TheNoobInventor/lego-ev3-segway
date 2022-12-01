@@ -29,7 +29,7 @@ right_motor, left_motor = Motor(Port.A), Motor(Port.C)
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 
 # Data log 
-filtered_speed = DataLog('time','low pass gyro','kalman gyro', name='filtered_speed', extension='csv', timestamp='False')
+filtered_speed = DataLog('time','low pass gyro','kalman gyro', name='filtered_speed', extension='csv', timestamp=False)
 
 # Initialize timers
 single_loop_timer = StopWatch()
@@ -183,8 +183,8 @@ while 1: # So that you can try balancing again when it falls
     wait(500)
 
     # Kalman initial conditions for gyro
-    measurement_error = 0.005 #1e-5        # Error in the measurement, assumed to be unchanging
-    process_error = 1e-4#1e-8            # Error in the estimate or process
+    measurement_error = 0.5 # 0.005 #1e-5        # Error in the measurement, assumed to be unchanging
+    process_error = 4 #1e-2 #1e-8            # Error in the estimate or process
     process_estimate = 0            # Process estimate
 
     # Reset data timer
