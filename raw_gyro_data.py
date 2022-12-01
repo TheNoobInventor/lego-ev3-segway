@@ -25,7 +25,7 @@ try:
     
     #
     ev3.screen.load_image(ImageFile.SLEEPING)
-    wait(3000) # wait 3 seconds
+    wait(2000) # wait 2 seconds
     ev3.screen.load_image(ImageFile.AWAKE)
     ev3.light.on(Color.GREEN)
     
