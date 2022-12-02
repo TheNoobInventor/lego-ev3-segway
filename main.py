@@ -252,7 +252,7 @@ while 1: # So that you can try balancing again when it falls
         # WHICH ONE IS SMOOTHED OUT THE BEST 
 
         # This is the main control feedback calculation
-        # output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate_l +
+        #output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate_l +
         #                                         28 * robot_body_angle_l +
         #                                         0.075 * wheel_rate +
         #                                         0.12 * wheel_angle)
