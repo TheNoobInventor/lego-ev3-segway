@@ -258,7 +258,7 @@ while 1: # So that you can try balancing again when it falls
         #                                         0.12 * wheel_angle)
 
         output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate + 
-                                                28 * robot_body_angle +
+                                                10 * robot_body_angle +
                                                 0.075 * wheel_rate +
                                                 0.12 * wheel_angle)
 
