@@ -183,9 +183,9 @@ while 1: # So that you can try balancing again when it falls
     wait(500)
 
     # Kalman initial conditions for gyro
-    measurement_error = 3 # 0.5 # 0.005 #1e-5        # Error in the measurement, assumed to be unchanging obtained from sensor specs
-    process_error = 0.5 # 0.5 #1e-2 #1e-8            # Error in the estimate or process
-    process_estimate = 0            # Process estimate
+    measurement_error = 3 # 0.5 # 0.005 #1e-5               # Error in the measurement, assumed to be unchanging obtained from sensor specs
+    process_error = 0.5 # 0.5 #1e-2 #1e-8                   # Error in the estimate or process
+    process_cov = 0                                         #
 
     # Reset data timer
     data_timer.reset()
@@ -221,9 +221,10 @@ while 1: # So that you can try balancing again when it falls
         robot_body_angle += robot_body_rate * average_control_loop_period
 
         # Kalman filter
+        pred_process_cov = process_cov + GYRO_OFFSET_FACTOR     #
         kalman_gain = process_error / (process_error + measurement_error)
         process_estimate = process_estimate + kalman_gain * (gyro_sensor_value - process_estimate)
-        process_error = (1 - kalman_gain) * process_error
+        process_cov = (1 - kalman_gain) * pred_process_cov
 
         # Log filter data
         filtered_speed.log(data_timer.time(), robot_body_rate, process_estimate) # rename later
