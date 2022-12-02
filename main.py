@@ -219,13 +219,14 @@ while 1: # So that you can try balancing again when it falls
         gyro_offset *= (1 - GYRO_OFFSET_FACTOR)
         gyro_offset += GYRO_OFFSET_FACTOR * gyro_sensor_value
         robot_body_rate = gyro_sensor_value - gyro_offset
-        robot_body_angle += robot_body_rate * average_control_loop_period
+        # robot_body_angle += robot_body_rate * average_control_loop_period
 
         # Kalman filter
         pred_process_cov = process_cov + GYRO_OFFSET_FACTOR     #
         kalman_gain = process_error / (process_error + measurement_error)
         gyro_estimate = gyro_estimate + kalman_gain * (gyro_sensor_value - gyro_estimate)
         process_cov = (1 - kalman_gain) * pred_process_cov
+        robot_body_angle += gyro_estimate * average_control_loop_period
 
         # Log filter data
         filtered_speed.log(data_timer.time(), robot_body_rate, gyro_estimate) # rename later
