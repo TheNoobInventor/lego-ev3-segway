@@ -29,7 +29,8 @@ right_motor, left_motor = Motor(Port.A), Motor(Port.C)
 gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 
 # Data log 
-filtered_speed = DataLog('time','low pass gyro','kalman gyro', name='filtered_speed', extension='csv', timestamp=False)
+filtered_speed = DataLog('time','low pass speed','kalman speed', name='filtered_speed', extension='csv', timestamp=False)
+filtered_angle= DataLog('time','low pass angle','kalman angle', name='filtered_angle', extension='csv', timestamp=False)
 
 # Initialize timers
 single_loop_timer = StopWatch()
@@ -151,6 +152,7 @@ while 1: # So that you can try balancing again when it falls
     drive_speed, steering = 0, 0
     control_loop_counter = 0
     robot_body_angle = -0.2
+    robot_body_angle_l = -0.2 # adjust this or the other or fashi
 
     # Since update_action() is a generator (it uses "yield" instead of "return") this doesn't actually run update_action() right now but
     # rather prepares it for use later.
@@ -218,8 +220,8 @@ while 1: # So that you can try balancing again when it falls
         # Low pass filter
         gyro_offset *= (1 - GYRO_OFFSET_FACTOR)
         gyro_offset += GYRO_OFFSET_FACTOR * gyro_sensor_value
-        # robot_body_rate = gyro_sensor_value - gyro_offset
-        # robot_body_angle += robot_body_rate * average_control_loop_period
+        robot_body_rate_l = gyro_sensor_value - gyro_offset
+        robot_body_angle_l += robot_body_rate_l * average_control_loop_period
 
         # Kalman filter
         pred_process_cov = process_cov + GYRO_OFFSET_FACTOR     #
@@ -230,7 +232,8 @@ while 1: # So that you can try balancing again when it falls
         robot_body_angle += gyro_estimate * average_control_loop_period
 
         # Log filter data
-        filtered_speed.log(data_timer.time(), robot_body_rate, gyro_estimate) # rename later
+        filtered_speed.log(data_timer.time(), robot_body_rate_l, gyro_estimate) # rename later
+        filtered_angle.log(data_timer.time(), robot_body_angle_l, robot_body_angle)
 
         # Calculate wheel angle and speed ...explain in detail
         left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
