@@ -186,7 +186,7 @@ while 1: # So that you can try balancing again when it falls
 
     # Kalman initial conditions for gyro
     measurement_error = 3 # 0.5 # 0.005 #1e-5               # Error in the measurement, assumed to be unchanging obtained from sensor specs
-    process_error = 0.5 # 0.5 #1e-2 #1e-8                   # Error in the estimate or process
+    process_error = 0.05 # 0.5 #1e-2 #1e-8                   # Error in the estimate or process
     process_cov = 0                                         #
     gyro_estimate = 0
 
@@ -229,13 +229,13 @@ while 1: # So that you can try balancing again when it falls
         gyro_estimate = gyro_estimate + kalman_gain * (gyro_sensor_value - gyro_estimate)
         process_cov = (1 - kalman_gain) * pred_process_cov
         robot_body_rate = gyro_estimate
-        robot_body_angle += gyro_estimate * average_control_loop_period
+        robot_body_angle += robot_body_rate * average_control_loop_period
 
         # Log filter data
-        filtered_speed.log(data_timer.time(), robot_body_rate_l, gyro_estimate) # rename later
+        filtered_speed.log(data_timer.time(), robot_body_rate_l, robot_body_rate) # rename later
         filtered_angle.log(data_timer.time(), robot_body_angle_l, robot_body_angle)
 
-        # Calculate wheel angle and speed ...explain in detail
+        #
         left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
 
         # Calculate wheel angle and speed ...explain in detail
@@ -257,7 +257,7 @@ while 1: # So that you can try balancing again when it falls
                                                 0.075 * wheel_rate +
                                                 0.12 * wheel_angle)
 
-        # output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate +
+        # output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate + 
         #                                         10 * robot_body_angle +
         #                                         0.075 * wheel_rate +
         #                                         0.12 * wheel_angle)
