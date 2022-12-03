@@ -257,10 +257,10 @@ while 1: # So that you can try balancing again when it falls
         #                                         0.075 * wheel_rate +
         #                                         0.12 * wheel_angle)
 
-        output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate + 
-                                                10 * robot_body_angle +
-                                                0.075 * wheel_rate +
-                                                0.12 * wheel_angle)
+        output_power = (-0.01 * drive_speed) + (27.2 * robot_body_rate +
+                                                 1.2 * robot_body_angle +
+                                                 0.005 * wheel_rate +
+                                                 0.08 * wheel_angle)
 
         # output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate + 
         #                                         10 * robot_body_angle +
@@ -270,7 +270,7 @@ while 1: # So that you can try balancing again when it falls
         # Motor limits
         if output_power > 100:
             output_power = 100
-        if output_power < -100:
+         if output_power < -100:
             output_power = -100
 
         # Drive motors
