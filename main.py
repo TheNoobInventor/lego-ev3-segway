@@ -270,7 +270,7 @@ while 1: # So that you can try balancing again when it falls
         # Motor limits
         if output_power > 100:
             output_power = 100
-         if output_power < -100:
+        if output_power < -100:
             output_power = -100
 
         # Drive motors
