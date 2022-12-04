@@ -184,7 +184,7 @@ while 1: # So that you can try balancing again when it falls
 
     # Kalman initial conditions for gyro
     measurement_error = 3 # 0.5                            # Error in the measurement, assumed to be unchanging obtained from sensor specs
-    process_error = 2 # 4                                # Error in the estimate or process
+    process_error = 5 # 4                                # Error in the estimate or process
     process_cov = 0                                         #
     gyro_estimate = 0
 
@@ -255,7 +255,7 @@ while 1: # So that you can try balancing again when it falls
         #                                         0.075 * wheel_rate +
         #                                         0.12 * wheel_angle)
 
-        output_power = (-0.01 * drive_speed) + (6.8 * robot_body_rate +
+        output_power = (-0.01 * drive_speed) + (4.8 * robot_body_rate +
                                                  26 * robot_body_angle +
                                                  0.2 * wheel_rate +
                                                  0.007 * wheel_angle)
