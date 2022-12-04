@@ -129,7 +129,7 @@ while 1: # So that you can try balancing again when it falls
     # Battery warning for voltage less than 7.5V
     battery_voltage = (ev3.battery.voltage())/1000
 
-    if battery_voltage < 7.5:
+    if battery_voltage < 7.15:
         ev3.light.on(Color.ORANGE)
         ev3.screen.load_image(ImageFile.DIZZY)
         ev3.speaker.play_file(SoundFile.UH_OH)
@@ -139,8 +139,6 @@ while 1: # So that you can try balancing again when it falls
     # any movement to stop before the program can continue
     ev3.screen.load_image(ImageFile.SLEEPING)
     ev3.light.off()
-
-    # include a beep so that we know when to start balance the robot
 
     # Reset sensors and initialize variables
     left_motor.reset_angle(0)
@@ -152,7 +150,7 @@ while 1: # So that you can try balancing again when it falls
     drive_speed, steering = 0, 0
     control_loop_counter = 0
     robot_body_angle = -0.2
-    robot_body_angle_l = -0.2 # adjust this or the other or fashi
+    robot_body_angle_l = -0.2
 
     # Since update_action() is a generator (it uses "yield" instead of "return") this doesn't actually run update_action() right now but
     # rather prepares it for use later.
@@ -186,7 +184,7 @@ while 1: # So that you can try balancing again when it falls
 
     # Kalman initial conditions for gyro
     measurement_error = 3 # 0.5                            # Error in the measurement, assumed to be unchanging obtained from sensor specs
-    process_error = 0.2 # 0.5                               # Error in the estimate or process
+    process_error = 4 # 0.2 # 0.5                               # Error in the estimate or process
     process_cov = 0                                         #
     gyro_estimate = 0
 
@@ -257,10 +255,10 @@ while 1: # So that you can try balancing again when it falls
         #                                         0.075 * wheel_rate +
         #                                         0.12 * wheel_angle)
 
-        output_power = (-0.01 * drive_speed) + (27.2 * robot_body_rate +
-                                                 1.2 * robot_body_angle +
-                                                 0.005 * wheel_rate +
-                                                 0.08 * wheel_angle)
+        output_power = (-0.01 * drive_speed) + (4.8 * robot_body_rate +
+                                                 26 * robot_body_angle +
+                                                 0.2 * wheel_rate +
+                                                 0.007 * wheel_angle)
 
         # output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate + 
         #                                         10 * robot_body_angle +
