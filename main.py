@@ -31,6 +31,7 @@ gyro_sensor, infrared_sensor = GyroSensor(Port.S2), InfraredSensor(Port.S3)
 # Data log 
 filtered_speed = DataLog('time','low pass speed','kalman speed', name='filtered_speed', extension='csv', timestamp=False)
 filtered_angle= DataLog('time','low pass angle','kalman angle', name='filtered_angle', extension='csv', timestamp=False)
+process_covv = DataLog('time','process cov', name='process_cov', extension='csv', timestamp=False)
 
 # Initialize timers
 single_loop_timer = StopWatch()
@@ -129,7 +130,7 @@ while 1: # So that you can try balancing again when it falls
     # Battery warning for voltage less than 7.5V
     battery_voltage = (ev3.battery.voltage())/1000
 
-    if battery_voltage < 7.15:
+    if battery_voltage < 7.5:
         ev3.light.on(Color.ORANGE)
         ev3.screen.load_image(ImageFile.DIZZY)
         ev3.speaker.play_file(SoundFile.UH_OH)
@@ -184,9 +185,8 @@ while 1: # So that you can try balancing again when it falls
 
     # Kalman initial conditions for gyro
     measurement_error = 3 # 0.5                            # Error in the measurement, assumed to be unchanging obtained from sensor specs
-    process_error = 5 # 4                                # Error in the estimate or process
-    process_cov = 0                                         #
-    gyro_estimate = 0
+    process_cov = 3.5 #
+    robot_body_rate = 0
 
     # Reset data timer
     data_timer.reset()
@@ -222,16 +222,21 @@ while 1: # So that you can try balancing again when it falls
         robot_body_angle_l += robot_body_rate_l * average_control_loop_period
 
         # Kalman filter
-        pred_process_cov = process_cov + GYRO_OFFSET_FACTOR     #
-        kalman_gain = process_error / (process_error + measurement_error)
-        gyro_estimate = gyro_estimate + kalman_gain * (gyro_sensor_value - gyro_estimate)
-        process_cov = (1 - kalman_gain) * pred_process_cov
-        robot_body_rate = gyro_estimate
+        #pred_process_cov = process_cov + GYRO_OFFSET_FACTOR     #
+        #kalman_gain = pred_process_cov / (pred_process_cov + measurement_error)
+        #process_cov = process_cov + GYRO_OFFSET_FACTOR     #
+        process_cov += GYRO_OFFSET_FACTOR     #
+        kalman_gain = process_cov / (process_cov + measurement_error)
+        #robot_body_rate = robot_body_rate + kalman_gain * (gyro_sensor_value - robot_body_rate)
+        robot_body_rate += kalman_gain * (gyro_sensor_value - robot_body_rate)
+        #process_cov = (1 - kalman_gain) * process_cov
+        process_cov *= (1 - kalman_gain)
         robot_body_angle += robot_body_rate * average_control_loop_period
 
         # Log filter data
         filtered_speed.log(data_timer.time(), robot_body_rate_l, robot_body_rate) # rename later
         filtered_angle.log(data_timer.time(), robot_body_angle_l, robot_body_angle)
+        process_covv.log(data_timer.time(), process_cov)
 
         #
         left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
@@ -255,16 +260,17 @@ while 1: # So that you can try balancing again when it falls
         #                                         0.075 * wheel_rate +
         #                                         0.12 * wheel_angle)
 
-        output_power = (-0.01 * drive_speed) + (4.8 * robot_body_rate +
-                                                 26 * robot_body_angle +
-                                                 0.2 * wheel_rate +
-                                                 0.007 * wheel_angle)
 
-        # output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate + 
-        #                                         10 * robot_body_angle +
-        #                                         0.075 * wheel_rate +
-        #                                         0.12 * wheel_angle)
+        # Working with kalman with process error of 4
+        #output_power = (-0.01 * drive_speed) + (4.8 * robot_body_rate +
+        #                                         26 * robot_body_angle +
+        #                                         0.2 * wheel_rate +
+        #                                         0.007 * wheel_angle)
 
+        output_power = (-0.01 * drive_speed) + (35 * robot_body_rate + 
+                                                 9 * robot_body_angle +
+                                                 0.02 * wheel_rate +
+                                                 0.5 * wheel_angle)
         # Motor limits
         if output_power > 100:
             output_power = 100
