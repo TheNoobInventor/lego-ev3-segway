@@ -185,7 +185,7 @@ while 1: # So that you can try balancing again when it falls
 
     # Kalman initial conditions for gyro
     measurement_error = 3 # 0.5                            # Error in the measurement, assumed to be unchanging obtained from sensor specs
-    process_cov = 2.5 # 1.5
+    process_cov = 1.5 #
     robot_body_rate = 0
 
     # Reset data timer
@@ -216,26 +216,27 @@ while 1: # So that you can try balancing again when it falls
         gyro_sensor_value = gyro_sensor.speed()
 
         # Low pass filter
-        gyro_offset *= (1 - GYRO_OFFSET_FACTOR)
-        gyro_offset += GYRO_OFFSET_FACTOR * gyro_sensor_value
-        robot_body_rate_l = gyro_sensor_value - gyro_offset
-        robot_body_angle_l += robot_body_rate_l * average_control_loop_period
+        #gyro_offset *= (1 - GYRO_OFFSET_FACTOR)
+        #gyro_offset += GYRO_OFFSET_FACTOR * gyro_sensor_value
+        #robot_body_rate_l = gyro_sensor_value - gyro_offset
+        #robot_body_angle_l += robot_body_rate_l * average_control_loop_period
 
         # Kalman filter
         #pred_process_cov = process_cov + GYRO_OFFSET_FACTOR     #
         #kalman_gain = pred_process_cov / (pred_process_cov + measurement_error)
+        #process_cov = process_cov + GYRO_OFFSET_FACTOR     #
         # process_cov += GYRO_OFFSET_FACTOR     #
         # process_cov += 1e-5#
-	#process_cov = (1 - kalman_gain) * pred_process_cov
-
-	kalman_gain = process_cov / (process_cov + measurement_error)
+        kalman_gain = process_cov / (process_cov + measurement_error)
+        #robot_body_rate = robot_body_rate + kalman_gain * (gyro_sensor_value - robot_body_rate)
         robot_body_rate += kalman_gain * (gyro_sensor_value - robot_body_rate)
+        #process_cov = (1 - kalman_gain) * process_cov
         process_cov *= (1 - kalman_gain)
         robot_body_angle += robot_body_rate * average_control_loop_period
 
         # Log filter data
-        filtered_speed.log(data_timer.time(), robot_body_rate_l, robot_body_rate) # rename later
-        filtered_angle.log(data_timer.time(), robot_body_angle_l, robot_body_angle)
+        #filtered_speed.log(data_timer.time(), robot_body_rate_l, robot_body_rate) # rename later
+        #filtered_angle.log(data_timer.time(), robot_body_angle_l, robot_body_angle)
         process_covv.log(data_timer.time(), process_cov)
 
         #
@@ -267,11 +268,10 @@ while 1: # So that you can try balancing again when it falls
         #                                         0.2 * wheel_rate +
         #                                         0.007 * wheel_angle)
 
-        output_power = (-0.01 * drive_speed) + (40 * robot_body_rate + #35 
-                                                 65 * robot_body_angle + #4
-                                                 0.05 * wheel_rate + #0.02
-                                                 0.025 * wheel_angle) #0.5
-
+        output_power = (-0.01 * drive_speed) + (34 * robot_body_rate + #35 
+                                                 5 * robot_body_angle + #4
+                                                 0.02 * wheel_rate + #0.02
+                                                 0.5 * wheel_angle) #0.5
         # Motor limits
         if output_power > 100:
             output_power = 100
@@ -294,6 +294,7 @@ while 1: # So that you can try balancing again when it falls
         action = next(action_task)
         if action is not None:
             drive_speed, steering = action
+
 
         # Make sure loop time is at least TARGET_LOOP_PERIOD. The output power
         # calculation above depends on having a certain amount of time in each loop. #
