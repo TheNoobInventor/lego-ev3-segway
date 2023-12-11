@@ -1,17 +1,19 @@
 #!/usr/bin/env pybricks-micropython
 
 '''
-This program balances the Lego Mindstorms Segway robot built using the LEGO Mindstorms EV3 home edition and a gyroscopic sensor.
+This program balances a Lego Segway robot built using the LEGO Mindstorms EV3 home edition and a gyroscopic sensor.
 The robot can be controlled in two ways:
 
-- directional control from a NodeRED flow with the Segway as an MQTT client and
+- directional control from a NodeRED flow with the Segway as an MQTT client. Commands to move forward, backward, turn left or right
+can be sent to the Segway via the MQTT broker.
 
-- tether control using the EV3 infrared sensor and beacon remote. In this mode, the Segway follows the beacon by rotating when the
-beacon is further away and translating when the beacon is closer.
+- tether control using the EV3 infrared sensor and beacon. In this mode, the Segway follows the beacon by first rotating (using a Proportional
+controller) to reduce the angle between them to approximately 10 degrees, then it translates towards the beacon (using a Proportial Derivative
+controller) until it gets close to it then stops.
 
 The code is modified from: https://pybricks.com/ev3-micropython/examples/gyro_boy.html
 
-The build instructions are available here: https://robotsquare.com/2014/06/23/tutorial-building-balanc3r/
+The robot build instructions are available here: https://robotsquare.com/2014/06/23/tutorial-building-balanc3r/
 '''
 
 from ucollections import namedtuple
@@ -42,15 +44,12 @@ action_timer = StopWatch()
 GYRO_CALIBRATION_LOOP_COUNT = 200   # Number of iterations for gyro calibration
 GYRO_OFFSET_FACTOR = 0.0005         # Gyro offset factor (obtained from GyroBoy project)
 TARGET_LOOP_PERIOD = 20             # 20 milliseconds
-prev_error = 0                      # Initial ... error
+prev_error = 0                      # Initial previous error for beacon derivative controller
 
-"""
-# "Robot motion/action definition"
-# Actions will be used to change which way the robot drives.
-"""
+# Robot action definition used to change how the robot drives
 Action = namedtuple('Action', ['drive_speed', 'steering'])
 
-# Pre-defined robot motions
+# Pre-defined robot actions
 FORWARD = Action(drive_speed=150, steering=0)
 BACKWARD = Action(drive_speed=-60, steering=0)
 TURN_LEFT = Action(drive_speed=0, steering=80)
@@ -67,13 +66,10 @@ Node_RED_Command = {
 
 # MQTT callback function
 def get_commands(topic, msg):
-
     if msg.decode() == "FORWARD":
-        ev3.screen.load_image(ImageFile.UP)
         Node_RED_Command['move_forward'] = True
 
     if msg.decode() == "BACKWARD":
-        ev3.screen.load_image(ImageFile.DOWN)
         Node_RED_Command['move_backward'] = True
 
     if msg.decode() == "TURN_LEFT":
@@ -84,7 +80,7 @@ def get_commands(topic, msg):
         ev3.screen.load_image(ImageFile.MIDDLE_LEFT)
         Node_RED_Command['turn_right'] = True
 
-# Setup MQTT connection
+# MQTT connection setup
 MQTT_ClientID = 'Segway'
 SERVER = ''     # Populate with your own details
 PORT = 1883
@@ -99,8 +95,11 @@ client.publish(Topic, 'Test')
 client.subscribe(Topic)
 
 """
-To ensure that no function calls are made that would otherwise affect the control loop time
-in the main program, those calls yield to the control loop while waiting for a certain thing to happen like this:
+This function checks for messages from Node-RED and if the beacon is on to update the drive speed and
+steering values appropriately.
+
+To ensure that no function calls are made that would otherwise affect the control loop time in the main program, 
+those calls yield to the control loop while waiting for a certain thing to happen like this:
 
     while not condition:
         yield
@@ -121,7 +120,6 @@ def update_action():
             while action_timer.time() < 5000:
                 yield
             yield STOP
-            ev3.screen.load_image(ImageFile.AWAKE)
             Node_RED_Command['move_forward'] = False
 
         if Node_RED_Command['move_backward'] == True:
@@ -129,7 +127,6 @@ def update_action():
             while action_timer.time() < 4000:
                 yield
             yield STOP
-            ev3.screen.load_image(ImageFile.AWAKE)
             Node_RED_Command['move_backward'] = False
 
         if Node_RED_Command['turn_left'] == True:
@@ -148,8 +145,11 @@ def update_action():
             ev3.screen.load_image(ImageFile.AWAKE)
             Node_RED_Command['turn_right'] = False
 
-        # Beacon mode (channel 1)
+        # Beacon mode (on channel 1)
         '''
+        beacon method returns relative distance between 0 and 100 (0 being very close
+        and 100 means far away) and approximate angle (-75 to 75 degrees)
+        between the beacon remote and infrared sensor. Remote has to be on (duh) and set to channel 1
         '''
         relative_distance, angle = infrared_sensor.beacon(1)
         action_timer.reset()
@@ -188,9 +188,10 @@ def stop_motors():
 # Main loop
 while True: 
     try:
-        # Battery warning for voltage less than 7.5V
+        # Calculate current battery voltage
         battery_voltage = (ev3.battery.voltage())/1000
 
+        # Battery warning for voltage less than 7.5V and breaks out of the loop
         if battery_voltage < 7.5:
             ev3.light.on(Color.ORANGE)
             ev3.screen.load_image(ImageFile.DIZZY)
@@ -218,7 +219,7 @@ while True:
         action_task = update_action()
 
         while True:
-            # Calibrate gyro offset - elaborate
+            # Calibrate gyro offset - elaborate, the gyro sensor has a max rate of rotation of 440 deg/s
             gyro_min_rate, gyro_max_rate = 440, -440 # deg/s
             gyro_sum = 0
             for _ in range(GYRO_CALIBRATION_LOOP_COUNT): # loop variable
@@ -228,7 +229,6 @@ while True:
                     gyro_max_rate = gyro_sensor_value
                 if gyro_sensor_value < gyro_min_rate:
                     gyro_min_rate = gyro_sensor_value
-
                 wait(5)
             if gyro_max_rate - gyro_min_rate < 2: # Understand the sign notation used and comment on it
                 break
@@ -312,7 +312,6 @@ while True:
 
             # This runs update_action() until the next "yield" statement
             action = next(action_task)
-            #client.check_msg()
             if action is not None:
                 drive_speed, steering = action
 
