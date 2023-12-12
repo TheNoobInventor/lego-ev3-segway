@@ -8,8 +8,8 @@ The robot can be controlled in two ways:
 can be sent to the Segway via the MQTT broker.
 
 - tether control using the EV3 infrared sensor and beacon. In this mode, the Segway follows the beacon by first rotating (using a Proportional
-controller) to reduce the angle between them to approximately 10 degrees, then it translates towards the beacon (using a Proportial Derivative
-controller) until it gets close to it then stops.
+controller) to reduce the angle between them to approximately 10 degrees, then it translates towards the beacon (using a Proportial 
+Derivative (PD) controller) until it gets close to it then stops.
 
 The code is modified from: https://pybricks.com/ev3-micropython/examples/gyro_boy.html
 
@@ -19,8 +19,8 @@ The robot build instructions are available here: https://robotsquare.com/2014/06
 from ucollections import namedtuple
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, InfraredSensor, GyroSensor
-from pybricks.parameters import Port, Color, Button
-from pybricks.media.ev3dev import SoundFile, ImageFile, Font
+from pybricks.parameters import Port, Color
+from pybricks.media.ev3dev import SoundFile, ImageFile
 from pybricks.tools import wait, StopWatch 
 
 from umqtt.simple import MQTTClient
@@ -44,7 +44,9 @@ action_timer = StopWatch()
 GYRO_CALIBRATION_LOOP_COUNT = 200   # Number of iterations for gyro calibration
 GYRO_OFFSET_FACTOR = 0.0005         # Gyro offset factor (obtained from GyroBoy project)
 TARGET_LOOP_PERIOD = 20             # 20 milliseconds
-prev_error = 0                      # Initial previous error for beacon derivative controller
+
+# Initialize previous error for the beacon derivative controller
+prev_error = 0                      
 
 # Robot action definition used to change how the robot drives
 Action = namedtuple('Action', ['drive_speed', 'steering'])
@@ -56,7 +58,7 @@ TURN_LEFT = Action(drive_speed=0, steering=80)
 TURN_RIGHT = Action(drive_speed=0, steering=-80)
 STOP = Action(drive_speed=0, steering=0)
 
-# Dictionary of initial state of commands from NodeRED
+# Initial state of Node-RED commands
 Node_RED_Command = {
     'move_forward': False,
     'move_backward': False,
@@ -91,12 +93,12 @@ client.connect()
 
 Topic = 'nodered/commands'
 client.set_callback(get_commands)
-client.publish(Topic, 'Test')
+client.publish(Topic, 'Publishing test')
 client.subscribe(Topic)
 
 """
-This function checks for messages from Node-RED and if the beacon is on to update the drive speed and
-steering values appropriately.
+This function is a generator that checks for messages from Node-RED and if the beacon is on and in range, to update 
+the drive speed and steering values appropriately.
 
 To ensure that no function calls are made that would otherwise affect the control loop time in the main program, 
 those calls yield to the control loop while waiting for a certain thing to happen like this:
@@ -113,6 +115,7 @@ def update_action():
     while True:
         # Check for messages from the MQTT broker
         client.check_msg()
+        action_timer.reset()
 
         # MQTT mode
         if Node_RED_Command['move_forward'] == True:
@@ -147,38 +150,43 @@ def update_action():
 
         # Beacon mode (on channel 1)
         '''
-        beacon method returns relative distance between 0 and 100 (0 being very close
-        and 100 means far away) and approximate angle (-75 to 75 degrees)
-        between the beacon remote and infrared sensor. Remote has to be on (duh) and set to channel 1
+        Turn on beacon and set the channel to 1.
+
+        The beacon method returns the relative distance (a value from 0 to 100 with 0 being very close and 100 far away) and 
+        the approximate angle (-75 to 75 degrees) between the infrared sensor and beacon. 
+
+        The Proportional controller outputs steering values to rotate the segway until the angle between the infrared 
+        sensor and beacon is less than 10 degrees. While the PD controller outputs drive speed values to translate the
+        segway towards the beacon and yields to a stop action when the relative distance is less than 10.
         '''
         relative_distance, angle = infrared_sensor.beacon(1)
-        action_timer.reset()
         global prev_error
-
-        if relative_distance == None:
-            yield
-        else: # that means that beacon is on
-            # Should these be declared here?
+        
+        # If the beacon is on and within range, the segway rotates until the angle between the infrared sensor and beacon is less 
+        # than 10 degrees
+        if relative_distance is not None:
             angle_error = 0 - angle
             K_angle = 4
             steering = K_angle * angle_error
             action = Action(drive_speed=0, steering=steering)
             yield action
 
-            # if it's within a certain range, then translate
+            # if the angle between the infrared sensor and beacon is less than 10 degrees, the segway translates towards the beacon
             if angle_error < 10:
                 error = 100 - relative_distance
                 d_error = (error - prev_error)/action_timer.time()
                 K_p, K_d = 6, 2.5
 
                 drive_speed = K_p * error + K_d * d_error
-                #
                 action = Action(drive_speed=drive_speed, steering=0)
                 prev_error = error
+                
                 if relative_distance < 10:
                     yield STOP
                 else:
                     yield action
+        else:
+            yield
 
 # Stops both motors
 def stop_motors():
@@ -198,8 +206,8 @@ while True:
             ev3.speaker.play_file(SoundFile.UH_OH)
             break
 
-        # Sleeping eyes and light off let us know that the robot is waiting for
-        # any movement to stop before the program can continue
+        # Sleeping eyes and light off let us know that the robot is waiting for any movement to 
+        # stop before the program can continue
         ev3.screen.load_image(ImageFile.SLEEPING)
         ev3.light.off()
 
@@ -214,15 +222,17 @@ while True:
         control_loop_counter = 0
         robot_body_angle = -0.2
 
-        # Since update_action() is a generator (it uses "yield" instead of "return") this doesn't actually run update_action() right now but
-        # rather prepares it for use later.
+        # Prepare the generator, update_action(), for use later
         action_task = update_action()
 
         while True:
-            # Calibrate gyro offset - elaborate, the gyro sensor has a max rate of rotation of 440 deg/s
-            gyro_min_rate, gyro_max_rate = 440, -440 # deg/s
+            # Calibrate gyro offset. This makes sure that the robot is perfectly still by ensuring that the 
+            # measured rate does not fluctuate by more than 2 deg/s. Gyro drift can cause the rate to be non-zero
+            # even when the robot is not moving, so this value is saved for later use. The gyro sensor has a max rate 
+            # of rotation of 440 deg/s.
+            gyro_min_rate, gyro_max_rate = 440, -440 
             gyro_sum = 0
-            for _ in range(GYRO_CALIBRATION_LOOP_COUNT): # loop variable
+            for _ in range(GYRO_CALIBRATION_LOOP_COUNT): 
                 gyro_sensor_value = gyro_sensor.speed()
                 gyro_sum += gyro_sensor_value
                 if gyro_sensor_value > gyro_max_rate:
@@ -230,12 +240,9 @@ while True:
                 if gyro_sensor_value < gyro_min_rate:
                     gyro_min_rate = gyro_sensor_value
                 wait(5)
-            if gyro_max_rate - gyro_min_rate < 2: # Understand the sign notation used and comment on it
+            if gyro_max_rate - gyro_min_rate < 2: 
                 break
-
-        # Therefore, initial offset is
         gyro_offset = gyro_sum / GYRO_CALIBRATION_LOOP_COUNT
-        print("Out of gyro loop")
 
         # Awake eyes and green light let us know that the robot is ready to go!
         ev3.speaker.play_file(SoundFile.SPEED_UP)
@@ -243,16 +250,14 @@ while True:
         ev3.light.on(Color.GREEN)
         wait(500)
 
-        # Balancing loop
+        # Segway balancing loop
         while True:
-            # This timer measures how long a single loop takes. This will be
-            # used to help keep the loop time consistent, even when different
-            # actions are happening.
+            # This timer measures how long a single loop takes. This will be used to help keep the loop time 
+            # consistent, even when different actions are happening.
             single_loop_timer.reset()
 
-            # This calculates the average control loop period. This is used in
-            # the control feedback calculation instead of the single loop time
-            # to filter out random fluctuations
+            # This calculates the average control loop period. This is used in the control feedback 
+            # calculation instead of the single loop time to filter out random fluctuations
             if control_loop_counter == 0:
                 # The first time through the loop, we need to assign a value to
                 # avoid dividing by zero later.
@@ -264,25 +269,22 @@ while True:
                 average_control_loop_period = (control_loop_timer.time() / 1000 / control_loop_counter)
             control_loop_counter += 1
 
-            # Calculate robot body angle and speed...explain in detail
+            # Calculate robot body angle and rate (or speed). The rate is calculated with a low pass filter
             gyro_sensor_value = gyro_sensor.speed()
-
-            # Low pass filter
             gyro_offset *= (1 - GYRO_OFFSET_FACTOR)
             gyro_offset += GYRO_OFFSET_FACTOR * gyro_sensor_value
             robot_body_rate = gyro_sensor_value - gyro_offset
             robot_body_angle += robot_body_rate * average_control_loop_period
 
-            #
+            # Motor angle values
             left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
 
-            # Calculate wheel angle and speed ...explain in detail
+            # Calculate wheel angle and rate. The wheel rate is calculated using a moving average
             previous_motor_sum = motor_position_sum
             motor_position_sum = left_motor_angle + right_motor_angle
             change = motor_position_sum - previous_motor_sum
             motor_position_change.insert(0, change)
             del motor_position_change[-1]
-
             wheel_angle += change - drive_speed * average_control_loop_period
             wheel_rate = sum(motor_position_change) / 4 / average_control_loop_period
 
@@ -302,9 +304,8 @@ while True:
             left_motor.dc(output_power - 0.1 * steering)
             right_motor.dc(output_power + 0.1 * steering)
 
-            # Check if robot fell down. If the output speed is +/-100% for more
-            # than one second, we know that we are no longer balancing properly.
-
+            # Check if robot fell down. If the output speed is +/-100% for more than one second, 
+            # we know that we are no longer balancing properly.
             if abs(output_power) < 100:
                 fall_timer.reset()
             elif fall_timer.time() > 1000:
@@ -315,14 +316,14 @@ while True:
             if action is not None:
                 drive_speed, steering = action
 
-            # Make sure loop time is at least TARGET_LOOP_PERIOD. The output power
-            # calculation above depends on having a certain amount of time in each loop. #
+            # Make sure loop time is at least TARGET_LOOP_PERIOD. The output power calculation 
+            # above depends on having a certain amount of time in each loop.
             wait(TARGET_LOOP_PERIOD - single_loop_timer.time())
 
         # Handle falling over. If we get to this point in this program, it means
         # that the robot fell over
 
-        # Stop all of the motors
+        # Stop all motors
         stop_motors()
 
         # Knocked out eyes and red light let us know that the robot lost its balance
@@ -330,7 +331,7 @@ while True:
         ev3.screen.load_image(ImageFile.KNOCKED_OUT)
         ev3.speaker.play_file(SoundFile.SPEED_DOWN)
 
-        # Wait for a few seconds before trying to balance again.
+        # Wait for a few seconds before trying to balance again
         wait(3000)
 
     except KeyboardInterrupt:
