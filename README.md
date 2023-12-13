@@ -24,7 +24,7 @@ The following components were used for this project:
 - Gyroscopic Sensor
 - [EDIMAX EW-7811Un wireless USB adapter](https://www.edimax.com/edimax/merchandise/merchandise_detail/data/edimax/in/wireless_adapters_n150/ew-7811un/)
 
-The robot build instructions are available here: https://robotsquare.com/2014/06/23/tutorial-building-balanc3r/
+The robot build instructions are available [here](https://robotsquare.com/2014/06/23/tutorial-building-balanc3r/).
 
 <p align='center'>
   <img src=docs/images/ev3_segway.jpg width=400>
