@@ -4,7 +4,7 @@
 This program balances a Lego Segway robot built using the LEGO Mindstorms EV3 home edition and a gyroscopic sensor.
 The robot can be controlled in two ways:
 
-- directional control from a NodeRED flow with the Segway as an MQTT client. Commands to move forward, backward, turn left or right
+- directional control from a Node-RED flow with the Segway as an MQTT client. Commands to move forward, backward, turn left or right
 can be sent to the Segway via the MQTT broker.
 
 - tether control using the EV3 infrared sensor and beacon. In this mode, the Segway follows the beacon by first rotating (using a Proportional
