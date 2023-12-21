@@ -181,10 +181,10 @@ def update_action():
                 action = Action(drive_speed=drive_speed, steering=0)
                 prev_error = error
                 
-                if relative_distance < 10:
-                    yield STOP
-                else:
+                if relative_distance > 10:
                     yield action
+                else:
+                    yield STOP
         else:
             yield
 
