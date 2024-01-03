@@ -84,11 +84,8 @@ def get_commands(topic, msg):
 
 # MQTT connection setup
 MQTT_ClientID = 'Segway'
-SERVER = ''     # Populate with your own details
-PORT = 1883
-USER = ''       # Populate with your own details
-PASSWORD = ''   # Populate with your own details
-client = MQTTClient(MQTT_ClientID, SERVER, PORT, USER, PASSWORD)
+SERVER = '192.168.1.117'
+client = MQTTClient(MQTT_ClientID, SERVER)
 client.connect()
 
 Topic = 'nodered/commands'
