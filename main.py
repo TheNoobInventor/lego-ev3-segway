@@ -58,7 +58,7 @@ TURN_LEFT = Action(drive_speed=0, steering=80)
 TURN_RIGHT = Action(drive_speed=0, steering=-80)
 STOP = Action(drive_speed=0, steering=0)
 
-# Initial state of Node-RED commands
+# Initialize Node-RED command states
 Node_RED_Command = {
     'move_forward': False,
     'move_backward': False,
@@ -107,7 +107,6 @@ Yield is also used to update the drive speed and steering values in the main con
 
     yield action
 """
-
 def update_action():
     while True:
         # Check for messages from the MQTT broker
@@ -254,7 +253,7 @@ while True:
             single_loop_timer.reset()
 
             # This calculates the average control loop period. This is used in the control feedback 
-            # calculation instead of the single loop time to filter out random fluctuations
+            # calculation instead of the single loop time to filter out random fluctuations.
             if control_loop_counter == 0:
                 # The first time through the loop, we need to assign a value to
                 # avoid dividing by zero later.
@@ -266,7 +265,7 @@ while True:
                 average_control_loop_period = (control_loop_timer.time() / 1000 / control_loop_counter)
             control_loop_counter += 1
 
-            # Calculate robot body angle and rate (or speed). The rate is calculated with a low pass filter
+            # Calculate robot body angle and rate (or speed), the rate is calculated with a low pass filter
             gyro_sensor_value = gyro_sensor.speed()
             gyro_offset *= (1 - GYRO_OFFSET_FACTOR)
             gyro_offset += GYRO_OFFSET_FACTOR * gyro_sensor_value
@@ -276,7 +275,7 @@ while True:
             # Motor angle values
             left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
 
-            # Calculate wheel angle and rate. The wheel rate is calculated using a moving average
+            # Calculate wheel angle and rate, the wheel rate is calculated using a moving average
             previous_motor_sum = motor_position_sum
             motor_position_sum = left_motor_angle + right_motor_angle
             change = motor_position_sum - previous_motor_sum
@@ -318,7 +317,7 @@ while True:
             wait(TARGET_LOOP_PERIOD - single_loop_timer.time())
 
         # Handle falling over. If we get to this point in this program, it means
-        # that the robot fell over
+        # that the robot fell over.
 
         # Stop all motors
         stop_motors()
