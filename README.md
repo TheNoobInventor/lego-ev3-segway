@@ -1,5 +1,5 @@
 # Lego EV3 Segway
-A segway robot is built with the LEGO MINDSTORMS EV3 robot kit and the EV3 Gyroscopic sensor. The self-balancing code is written in Python using EV3 MicroPython: which runs on top of the ev3dev Operating System (OS).
+A segway robot is built with the LEGO MINDSTORMS EV3 robot kit and the EV3 Gyro sensor. The self-balancing code is written in Python using EV3 MicroPython which runs on top of the ev3dev Operating System (OS).
 
 The robot can be controlled in two ways:
 
@@ -21,7 +21,7 @@ Derivative (PD) controller) until it gets close to it then stops. This control m
 The following components were used for this project:
 
 - LEGO MINDSTORMS EV3 Home Edition #31313
-- Gyroscopic Sensor
+- [EV3 Gyro Sensor](https://raisingrobots.com/product/gyro-sensor/)
 - MicroSD card (larger than 2GB but not greater than 32GB)
 - [EDIMAX EW-7811Un wireless USB adapter](https://www.edimax.com/edimax/merchandise/merchandise_detail/data/edimax/in/wireless_adapters_n150/ew-7811un/)
 - PC or single board computer (to run the MQTT broker and Node-RED)
@@ -66,31 +66,178 @@ Then run this command to clone the project repository:
 git clone https://github.com/TheNoobInventor/lego-ev3-segway.git
 ```
 
-### MQTT installation
+### MQTT and Node-RED setup
 
-Messaging Queuing Telemetry Transport (MQTT) is a protocol commonly used for message exchange between things namely devices, sensors, devices, computers etc. It uses a *publish and subscribe* architecture such that a device, an MQTT client, can publish a message on a topic to an MQTT broker and other MQTT client(s) subscribe to the topic to receive the message.
+Messaging Queuing Telemetry Transport (MQTT) is a protocol commonly used for message exchange between things namely devices, sensors, devices, computers etc. It uses a [publish and subscribe architecture](https://ably.com/topic/pub-sub) such that a device, an MQTT client, can publish a message on a topic to an MQTT broker and other MQTT client(s) subscribe to the topic to receive the message.
 
 The MQTT broker acts as a middleman to facilitate communication between devices by dispatching messages published on a topic from one client to other client(s) that subscribe on the same topic. A client can be both a publisher and subscriber. 
 
 MQTT messages contain a payload with the data to be consumed by the client, in the case of the LEGO segway, the payload will contain commands, for instance **"TURN LEFT"**, to control the segway. Payloads are usually written in JSON format.
 
-In this project, the MQTT broker and one MQTT client, Node-RED, are installed on the PC. The other MQTT client is already installed in the EV3 MicroPython image. The mosquitto MQTT broker is used and can be installed on a number of operating systems, distributions, or platforms; mosquitto and can be downloaded from [here](https://mosquitto.org/download/). The image below shows the connection between the MQTT clients and mosquitto.
+In this project, the MQTT broker and one MQTT client, Node-RED, are installed on the PC. The mosquitto MQTT broker is used and can be installed on a number of operating systems, distributions, or platforms; mosquitto and can be downloaded from [here](https://mosquitto.org/download/). 
+
+Node-RED is a flow-based programming tool that makes the process of connecting hardware devices, APIs and online services easier. It has built-in support for MQTT and similar to the MQTT broker, it can be installed on a number of operating systems or platforms. Node-RED can be downloaded [here](https://nodered.org/docs/getting-started/local), Ubuntu is the operating system used for this project. Node-RED was installed with the Raspberry Pi [bash script](https://nodered.org/docs/getting-started/raspberrypi) as both Ubuntu and Raspberry Pi OS are Debian-based operating systems.
+
+To run Node-RED, open a terminal window and type in this command:
+```
+node-red
+```
+
+This will spin up a local server which can be accessed by opening up the link in a browser. From the screenshot below, Node-RED is available at http://127.0.0.1:1880/.
 
 <p align='center'>
-  <img src=docs/images/mosquitto_connection.png>
+  <img src=docs/images/nodered_terminal.png width=500>
 </p>
 
-### Node-RED installation
+Clicking on this link opens the Node-RED editor:
+
+<p align='center'>
+  <img src=docs/images/nodered_homepage.png>
+</p>
+
+In the case of Ubuntu, once the mosquitto MQTT broker is installed, the broker automatically starts as a systemd service. This can be confirmed by executing this command:
+
+```
+systemctl status mosquitto.service
+```
+
+Which will output:
+
+<p align='center'>
+  <img src=docs/images/mosquitto_service.png width=500>
+</p>
+
+To stop the mosquitto service run this command:
+
+```
+systemctl stop mosquitto.service
+```
+
+And to start it up again:
+
+```
+systemctl start mosquitto.service
+```
+
+To create a connection between the Node-RED MQTT client and mosquitto, search for the following nodes at the top left corner of the Node-RED editor and drag them into the flow workspace: *inject*, *mqtt in*, *mqtt out* and *debug*. Then wire (or connect) the debug and mqtt_in nodes by clicking the grey box (port) of the *mqtt in* node and dragging the wire to the debug node. Likewise, do the same for the *inject* node to the *mqtt out* node. The comment nodes below were added to explain what functionalities were being tested.
+
+<p align='center'>
+  <img src=docs/images/nodered_test1.png>
+</p>
+
+#### MQTT publisher
+
+The installed mosquitto broker comes with MQTT clients that can be used to publish (`mosquitto_pub`) and subscribe (`mosquitto_sub`) to topics from a terminal window. Before demonstrating publishing in MQTT, the MQTT broker needs to be set up and this will be done in Node-RED.
+
+First, double click on the *mqtt in* node and on the right of the *Server* field click on edit button.
+
+<p align='center'>
+  <img src=docs/images/1_mqtt_in.png width=400>
+</p>
+
+Input a name for the broker, the IP address of the PC/computer the broker is installed on, then click on the *Add* button.
+
+<p align='center'>
+  <img src=docs/images/2_mqtt_in.png width=400>
+</p>
+
+Next add a topic name, in this case **'test/topic'** was chosen, then click on *Done*. Afterwards click on the *mqtt out* node and choose the broker that was just set up and input the topic name as well. Confirm these inputs by clicking on *Done*.
+
+<p align='center'>
+  <img src=docs/images/3_mqtt_in.png width=400>
+</p>
+
+To effect the changes made, click on the *Deploy* button at the top right corner of the Node-RED tab.
+
+<p align='left'>
+  <img src=docs/images/deploy.png width=200>
+</p>
+
+A "connected" text is shown under the *mqtt in* node to signify that a connection has been established with the mosquitto broker.
+
+<p align='center'>
+  <img src=docs/images/mqtt_connected.png width=400>
+</p>
+
+To see messages in Node-RED, click on the 'debug' logo as shown below.
+
+<p align='center'>
+  <img src=docs/images/debug_panel.png width=300>
+</p>
+
+To demonstrate publishing with MQTT, open up a terminal and publish the message **"Hello World"** on the topic **'test/topic'** using the `mosquitto_pub` client:
+
+```
+mosquitto_pub -t test/topic -m "Hello World"
+```
+
+This message is seen in the debug panel of Node-RED.
+
+<p align='center'>
+  <img src=docs/images/nodered_pub_test.png width=800>
+</p>
+
+#### MQTT subscriber
+
+Double click on the *mqtt out* node and choose the broker that was just set up and type in the topic name as well. Confirm these inputs by clicking on *Done*.
+
+<p align='center'>
+  <img src=docs/images/mqtt_out.png width=400>
+</p>
+
+Click again on the *Deploy* button to effect these changes.
+
+The `mosquitto_sub` client will be used to demonstrate MQTT subscription. The client will subscribe to the topic **test/topic** to receive any incoming messages published from Node-RED.
+
+Firstly, double click on the *inject* node, choose a name for it, then change the payload type from timestamp to a string.
+
+<p align='center'>
+  <img src=docs/images/1_inject_node.png width=400>
+</p>
+
+Type in a message to be sent, input the message topic as **topic/test** then click on *Done*.
+
+<p align='center'>
+  <img src=docs/images/2_inject_node.png width=400>
+</p>
+
+To subscribe to any messages published on the topic/test topic by Node-RED, using the `mosquitto_sub client`, open a terminal and run this command:
+
+```
+mosquitto_sub -t test/topic
+```
+
+To publish the message from the Node-RED client, click on the button on the left of the `inject` node as shown below.
+
+<p align='center'>
+  <img src=docs/images/inject_message.png width=400>
+</p>
+
+The published message is received by the `mosquitto_sub` client.
+
+<p align='center'>
+  <img src=docs/images/terminal_mqtt_message.png width=400>
+</p>
+
+The message is also shown in the Node-RED debug panel. 
+
+<p align='center'>
+  <img src=docs/images/publish_message_nodered.png width=800>
+</p>
 
 ## Main program 
+
+With all the requisite softwares installed and setup, it's time to delve into the main segway program. The code for the segway is modified from the [Gyro Boy project](https://pybricks.com/ev3-micropython/examples/gyro_boy.html) which balances the Gyro Boy on its two wheels by making use of the EV3 Gyro sensor. The following flow chart summarizes the major parts of the program.
 
 <p align='center'>
   <img src=docs/images/main_program.png>
 </p>
 
+### Segway connection to MQTT and Node-RED
 
-### MQTT and Node-RED setup
-
+<p align='center'>
+  <img src=docs/images/mosquitto_connection.png>
+</p>
 
 ### Control Modes
 
@@ -115,11 +262,13 @@ In this project, the MQTT broker and one MQTT client, Node-RED, are installed on
   <img src=docs/images/beacon_mode.png>
 </p>
 
-
 ## Walkthrough video
 
 ## Recommendations
 
 ## References
 
+- [Mosquitto docs](https://mosquitto.org/documentation/)
 - [HiveMQ](https://www.hivemq.com/mqtt/)
+- [NodeRED](https://nodered.org/about/)
+- [TheThingsIndustries](https://www.thethingsindustries.com/docs/integrations/node-red/)

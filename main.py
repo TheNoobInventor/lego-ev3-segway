@@ -84,7 +84,7 @@ def get_commands(topic, msg):
 
 # MQTT connection setup
 MQTT_ClientID = 'Segway'
-SERVER = '192.168.1.117'
+SERVER = '192.168.1.111'
 client = MQTTClient(MQTT_ClientID, SERVER)
 client.connect()
 
