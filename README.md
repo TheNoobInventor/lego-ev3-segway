@@ -187,7 +187,7 @@ Double click on the *mqtt out* node and choose the broker that was just set up a
 
 Click again on the *Deploy* button to effect these changes.
 
-The `mosquitto_sub` client will be used to demonstrate MQTT subscription. The client will subscribe to the topic **test/topic** to receive any incoming messages published from Node-RED.
+The `mosquitto_sub` client will be used to demonstrate MQTT subscription. The client will subscribe to the topic **'test/topic'** to receive any incoming messages published from Node-RED.
 
 Firstly, double click on the *inject* node, choose a name for it, then change the payload type from timestamp to a string.
 
@@ -195,7 +195,7 @@ Firstly, double click on the *inject* node, choose a name for it, then change th
   <img src=docs/images/1_inject_node.png width=400>
 </p>
 
-Type in a message to be sent, input the message topic as **topic/test** then click on *Done*.
+Type in a message to be sent, input the message topic as **'test/topic'** then click on *Done*.
 
 <p align='center'>
   <img src=docs/images/2_inject_node.png width=400>
@@ -216,37 +216,142 @@ To publish the message from the Node-RED client, click on the button on the left
 The published message is received by the `mosquitto_sub` client.
 
 <p align='center'>
-  <img src=docs/images/terminal_mqtt_message.png width=400>
+  <img src=docs/images/terminal_mqtt_message.png width=500>
 </p>
 
 The message is also shown in the Node-RED debug panel. 
 
 <p align='center'>
-  <img src=docs/images/publish_message_nodered.png width=800>
+  <img src=docs/images/publish_message_nodered.png>
 </p>
 
 ## Main program 
 
-With all the requisite softwares installed and setup, it's time to delve into the main segway program. The code for the segway is modified from the [Gyro Boy project](https://pybricks.com/ev3-micropython/examples/gyro_boy.html) which balances the Gyro Boy on its two wheels by making use of the EV3 Gyro sensor. The following flow chart summarizes the major parts of the program.
+With all the requisite softwares installed and setup, it's time to delve into the main segway program. The code for the segway is modified from the [Gyro Boy project](https://pybricks.com/ev3-micropython/examples/gyro_boy.html) which balances the Gyro Boy on its two wheels by making use of the EV3 Gyro sensor. The `main.py` Python script contains a lot of lines of code with comments as well, however, the major parts of the program are summarized in the flow chart below.
 
 <p align='center'>
   <img src=docs/images/main_program.png>
 </p>
 
-### Segway connection to MQTT and Node-RED
+### Initializations
+The program starts by initializing the EV3 brick, the two motors, the infrared and gyro sensors and various constants and variables. Some of these variables include a `namedtuple` called *Action* used to define the `drive_speed` and `steering` values for particular robot actions. These values are used later to calculate the output power of the motors to move or keep the segway stationary while balanced.
 
-<p align='center'>
-  <img src=docs/images/mosquitto_connection.png>
-</p>
+```
+# Robot action definition used to change how the robot drives
+Action = namedtuple('Action', ['drive_speed', 'steering'])
 
-### Control Modes
+# Pre-defined robot actions
+FORWARD = Action(drive_speed=150, steering=0)
+BACKWARD = Action(drive_speed=-60, steering=0)
+TURN_LEFT = Action(drive_speed=0, steering=80)
+TURN_RIGHT = Action(drive_speed=0, steering=-80)
+STOP = Action(drive_speed=0, steering=0)
+```
+
+Another set of variables that are initialized is a dictionary of Node-RED command states. The states are all initialized as `False` then when a command is received from Node-RED the corresponding command state is set to `True` with the respective action executed by the Segway. This process will be elaborated on in the [directional control](#mqtt-mode-for-directional-control-with-node-red) subsection.
+
+```
+# Initialize Node-RED command states
+Node_RED_Command = {
+    'move_forward': False,
+    'move_backward': False,
+    'turn_right': False,
+    'turn_left': False,
+}
+```
+
+The EV3 MicroPython image has the lightweight MQTT client, [`umqtt`](https://mpython.readthedocs.io/en/v2.2.1/library/mPython/umqtt.simple.html), built in. It is imported for use in the main program as follows:
+
+```from umqtt.simple import MQTTClient```
+
+However, to ensure that the segway can connect to MQTT broker without any authentication requirements, some lines will need to be added to the mosquitto configuration file. First stop the mosquitto service and open the `mosquitto.conf` file with one's favorite editor with admin privileges:
+```
+sudo vim /etc/mosquitto/mosquitto.conf
+```
+
+Add these lines to enable the segway to listen for incoming network connections on port 1883 (MQTT broker default port) and to connect easily to the MQTT broker without any authentication:
+
+```
+listener 1883 0.0.0.0
+allow_anonymous true
+```
+
+Save these changes then start up the mosquitto service again. More information about configuring mosquitto is available [here](https://mosquitto.org/man/mosquitto-conf-5.html).
+
+The code snippet below shows the procedure for the segway to establish an MQTT connection with mosquitto where the `BROKER` constant is the IP address of the MQTT broker. 
+
+```
+# MQTT connection setup
+MQTT_ClientID = 'Segway'
+BROKER = '192.168.1.111'
+client = MQTTClient(MQTT_ClientID, BROKER)
+client.connect()
+
+Topic = 'nodered/commands'
+client.set_callback(get_commands)
+client.publish(Topic, 'Publishing test')
+client.subscribe(Topic)
+```
+
+### update_action() generator function
+The final step before stepping into the main program loop is defining the `update_action()` generator function. A Python generator function is a function that returns a lazy iterator, or an on-demand iterable object. These objects can be looped over like a list, however, unlike lists, lazy iterators do not store their contents in memory.
+
+A generator function, or simply a generator, differs from a normal Python function as it uses a `yield` statement instead of the `return` statement.
+
+Consider the simple script below.
+
+```
+def test():
+    yield 1
+    yield 2
+    yield 3
+
+values = test()
+
+print(values)
+print(next(values))
+print(next(values))
+print(next(values))
+```
+
+The following output is obtained after the script is executed:
+```
+<generator object test at 0x7f381be2e1f0>
+1
+2
+3
+```
+
+At this point, `values = test()`, when the generator is called, it does not execute the function body immediately. Instead it returns a generator object, which was printed out with `print(values)`. The `yield` keyword is used to produce a value from the generator. The `next()` method is used to loop over the object and outputs the yielded numbers `1, 2, 3` from `print(next(values))`; `for` loops can also be used to iterate over generators. 
+
+When a generator calls `yield` it is momentarily passing control back to the code looping over the generator values. The `next()` method, or `for` loop, then passes control to the generator which yields a value back. This exchange of control continues until there are no more yields in the generator.
+
+The YouTube video by [Socratica](https://www.youtube.com/watch?v=gMompY5MyPg) and these tutorials by [RealPython]((https://realpython.com/introduction-to-python-generators/)) and [Programiz](https://www.programiz.com/python-programming/generator) provide more detailed information and examples on Python generators.
+
+In the case of this project, the `update_action()` generator checks for directional control messages from Node-RED and if the beacon is on and in range, `yield` is used update the `drive_speed` and `steering` values accordingly with: 
+
+```
+yield action
+```
+For instance, to move the segway forward, the `drive_speed` and `steering` values are updated with this predefined robot action:
+```
+yield FORWARD
+```
+These values are looped over by the main progam control loop and used to calculate the output power of the motors. 
+
+To ensure that no function calls are made that would otherwise affect the control loop time in the main program, those calls yield to the control loop while waiting for a certain thing to happen like this:
+
+    while not condition:
+        yield
+
+As shown in the figure below, the `update_action()` generator encloses the segway's MQTT and Beacon mdoes of operations. The respective steps for each mode are covered in the subsequent subsections.
 
 <p align='center'>
   <img src=docs/images/update_action.png>
 </p>
 
 
-### MQTT mode for directional control with Node-RED
+#### MQTT mode for directional control with Node-RED
 <p align='center'>
   <img src=docs/images/mqtt_mode.png>
 </p>
@@ -256,11 +361,18 @@ With all the requisite softwares installed and setup, it's time to delve into th
   <img src=docs/images/Node-RED-commands.png>
 </p>
 
-### Beacon mode for tether control with beacon
+
+<p align='center'>
+  <img src=docs/images/mosquitto_connection.png>
+</p>
+
+#### Beacon mode for tether control with beacon
 
 <p align='center'>
   <img src=docs/images/beacon_mode.png>
 </p>
+
+### Main program loop
 
 ## Walkthrough video
 
@@ -272,3 +384,4 @@ With all the requisite softwares installed and setup, it's time to delve into th
 - [HiveMQ](https://www.hivemq.com/mqtt/)
 - [NodeRED](https://nodered.org/about/)
 - [TheThingsIndustries](https://www.thethingsindustries.com/docs/integrations/node-red/)
+- [HackMD: Installing and Using MQTT Broker (Mosquitto) & Node-Red](https://hackmd.io/@lnu-iot/rJr_nGyq5#:~:text=Connecting%20Node%2DRed%20to%20Mosquitto%20MQTT%20Broker&text=Step%201%3A%20Add%20an%20%22mqtt,to%20add%20a%20new%20server.)

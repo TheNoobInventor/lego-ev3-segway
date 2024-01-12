@@ -84,8 +84,8 @@ def get_commands(topic, msg):
 
 # MQTT connection setup
 MQTT_ClientID = 'Segway'
-SERVER = '192.168.1.111'
-client = MQTTClient(MQTT_ClientID, SERVER)
+BROKER = '192.168.1.111'
+client = MQTTClient(MQTT_ClientID, BROKER)
 client.connect()
 
 Topic = 'nodered/commands'
@@ -95,7 +95,7 @@ client.subscribe(Topic)
 
 """
 This function is a generator that checks for messages from Node-RED and if the beacon is on and in range, to update 
-the drive speed and steering values appropriately.
+the drive speed and steering values accordingly.
 
 To ensure that no function calls are made that would otherwise affect the control loop time in the main program, 
 those calls yield to the control loop while waiting for a certain thing to happen like this:
@@ -116,6 +116,7 @@ def update_action():
         # MQTT mode
         if Node_RED_Command['move_forward'] == True:
             yield FORWARD 
+            # Drive forward for 5 seconds, then stop
             while action_timer.time() < 5000:
                 yield
             yield STOP
