@@ -7,7 +7,7 @@ The robot can be controlled in two ways:
 can be sent to the Segway via the MQTT broker. This control method is dubbed **MQTT mode**. 
 
 - **tether control** using the EV3 infrared sensor and beacon. In this mode, the segway follows the beacon by first rotating (using a Proportional
-controller) to reduce the angle between them to approximately 10 degrees, then it translates towards the beacon (using a Proportial 
+controller) to reduce the angle between them to less than 10 degrees, then it translates towards the beacon (using a Proportial 
 Derivative (PD) controller) until it gets close to it then stops. This control method is dubbed **beacon mode**, which is shown in the animation below.
 
 <p align='center'>
@@ -22,7 +22,7 @@ The following components were used for this project:
 
 - LEGO MINDSTORMS EV3 Home Edition #31313
 - [EV3 Gyro Sensor](https://raisingrobots.com/product/gyro-sensor/)
-- MicroSD card (larger than 2GB but not greater than 32GB)
+- MicroSD card (larger than 2 GB but not greater than 32 GB)
 - [EDIMAX EW-7811Un wireless USB adapter](https://www.edimax.com/edimax/merchandise/merchandise_detail/data/edimax/in/wireless_adapters_n150/ew-7811un/)
 - PC or single board computer (to run the MQTT broker and Node-RED)
 
@@ -45,14 +45,14 @@ The MQTT mode requires a connection between the host PC and the EV3 for messages
 
 Plug in the dongle into the EV3 bricks' USB port, then navigate to the ***Wireless and Networks > Wi-Fi*** menu on the brick. Check the ***"Powered"*** box to enable to Wi-Fi network search then connect to the network the PC is on. It is advisable to set a static IP address for the EV3 on one's router.
 
-There are other networking options which are detailed [here](https://www.ev3dev.org/docs/networking/).
+Other networking options are detailed [here](https://www.ev3dev.org/docs/networking/).
 
 ### SSH connection to EV3
 
 With the network connection set up, the next thing is configure an SSH connection to the EV3. This will enable commands to be sent to the robot, over the network, to run programs, change settings and install packages.
 
 This ev3dev [guide](https://www.ev3dev.org/docs/tutorials/connecting-to-ev3dev-with-ssh/) is used to set up the SSH connection which has instructions for MacOS, Ubuntu and Windows.
-The SSH connection is also necessary if one wants to use the [Visual Studio Code Remote - SSH extension](https://code.visualstudio.com/docs/remote/ssh) to edit files easily in VS Code. However, after sometime the VS Code remote connection to the robot could not be established, this issue is nonexistent when creating an ssh connection to the robot using a terminal window; hopefully others do not encounter this issue.
+The SSH connection is also necessary if one wants to use the [Visual Studio Code Remote - SSH extension](https://code.visualstudio.com/docs/remote/ssh) to edit files easily in VS Code. However, after sometime the VS Code remote connection to the robot could not be established, this issue is nonexistent when creating an ssh connection to the robot using a terminal window; this method will be used herein.
 
 ### Clone Project Repository
 
@@ -68,9 +68,9 @@ git clone https://github.com/TheNoobInventor/lego-ev3-segway.git
 
 ### MQTT and Node-RED setup
 
-Messaging Queuing Telemetry Transport (MQTT) is a protocol commonly used for message exchange between things namely devices, sensors, devices, computers etc. It uses a [publish and subscribe architecture](https://ably.com/topic/pub-sub) such that a device, an MQTT client, can publish a message on a topic to an MQTT broker and other MQTT client(s) subscribe to the topic to receive the message.
+Messaging Queuing Telemetry Transport (MQTT) is a protocol commonly used for message exchange between things namely devices, sensors, devices, computers etc. It uses a [publish and subscribe architecture](https://ably.com/topic/pub-sub) such that a device, an MQTT client, can publish a message on a topic to an MQTT broker and other MQTT clients subscribe to the topic to receive the message.
 
-The MQTT broker acts as a middleman to facilitate communication between devices by dispatching messages published on a topic from one client to other client(s) that subscribe on the same topic. A client can be both a publisher and subscriber. 
+The MQTT broker acts as an intermediary to facilitate communication between devices by dispatching messages published on a topic from one client to other client(s) that subscribe on the same topic. A client can be both a publisher and subscriber. 
 
 MQTT messages contain a payload with the data to be consumed by the client, in the case of the LEGO segway, the payload will contain commands, for instance **"TURN LEFT"**, to control the segway. Payloads are usually written in JSON format.
 
@@ -227,7 +227,7 @@ The message is also shown in the Node-RED debug panel.
 
 ## Main program 
 
-With all the requisite softwares installed and setup, it's time to delve into the main segway program. The code for the segway is modified from the [Gyro Boy project](https://pybricks.com/ev3-micropython/examples/gyro_boy.html) which balances the Gyro Boy on its two wheels by making use of the EV3 Gyro sensor. The `main.py` Python script contains a lot of lines of code with comments as well, however, the major parts of the program are summarized in the flow chart below.
+With all the requisite software installed and setup, it's time to delve into the main segway program. The code for the segway is modified from the [Gyro Boy project](https://pybricks.com/ev3-micropython/examples/gyro_boy.html) which balances the Gyro Boy on its two wheels by making use of the EV3 Gyro sensor. The `main.py` Python script contains a lot of lines of code with comments as well, however, the major parts of the program are summarized in the flow chart below.
 
 <p align='center'>
   <img src=docs/images/main_program.png>
@@ -278,7 +278,7 @@ allow_anonymous true
 
 Save these changes then start up the mosquitto service again. More information about configuring mosquitto is available [here](https://mosquitto.org/man/mosquitto-conf-5.html).
 
-The code snippet below shows the procedure for the segway to establish an MQTT connection with mosquitto where the `BROKER` constant is the IP address of the MQTT broker. 
+The code snippet below shows the procedure for the segway to establish an MQTT connection with mosquitto where the `BROKER` constant is the IP address of the MQTT broker. The client subscribes to the topic **"nodered/commands"** to receive messages from Node-RED and to test its MQTT connection it also publishes the message **"Publishing test"** on the same topic.
 
 ```
 # MQTT connection setup
@@ -326,41 +326,86 @@ At this point, `values = test()`, when the generator is called, it does not exec
 
 When a generator calls `yield` it is momentarily passing control back to the code looping over the generator values. The `next()` method, or `for` loop, then passes control to the generator which yields a value back. This exchange of control continues until there are no more yields in the generator.
 
-The YouTube video by [Socratica](https://www.youtube.com/watch?v=gMompY5MyPg) and these tutorials by [RealPython]((https://realpython.com/introduction-to-python-generators/)) and [Programiz](https://www.programiz.com/python-programming/generator) provide more detailed information and examples on Python generators.
+The YouTube video by [Socratica](https://www.youtube.com/watch?v=gMompY5MyPg) and these tutorials by [RealPython](https://realpython.com/introduction-to-python-generators/) and [Programiz](https://www.programiz.com/python-programming/generator) provide more detailed information and examples on Python generators.
 
 In the case of this project, the `update_action()` generator checks for directional control messages from Node-RED and if the beacon is on and in range, `yield` is used update the `drive_speed` and `steering` values accordingly with: 
 
 ```
 yield action
 ```
-For instance, to move the segway forward, the `drive_speed` and `steering` values are updated with this predefined robot action:
+For instance, to turn the segway to the left, the `drive_speed` and `steering` values are updated with this predefined robot action:
 ```
-yield FORWARD
+yield TURN_LEFT
 ```
-These values are looped over by the main progam control loop and used to calculate the output power of the motors. 
-
-To ensure that no function calls are made that would otherwise affect the control loop time in the main program, those calls yield to the control loop while waiting for a certain thing to happen like this:
+These values are looped over by the main progam control loop and used to calculate the output power of the motors. To ensure that no function calls are made that would otherwise affect the control loop time in the main program, those calls yield to the control loop while waiting for a certain thing to happen like this:
 
     while not condition:
         yield
 
-As shown in the figure below, the `update_action()` generator encloses the segway's MQTT and Beacon mdoes of operations. The respective steps for each mode are covered in the subsequent subsections.
+As shown in the figure below, the `update_action()` generator encloses the segway's MQTT and Beacon modes of operation. The respective steps for each mode are covered in the subsequent subsections.
 
 <p align='center'>
   <img src=docs/images/update_action.png>
 </p>
 
-
 #### MQTT mode for directional control with Node-RED
+The flow chart below summarizes the steps to run the segway in MQTT mode to achieve directional control using Node-RED.
+
 <p align='center'>
   <img src=docs/images/mqtt_mode.png>
 </p>
 
+It was established in the update_action() [subsection](#update_action-generator-function) that the segway MQTT client is subscribed to the **"nodered/commands"** topic. The client checks for messages sent from Node-RED, via the MQTT broker, by calling the `umqtt` function, `check_msg()` function at the start of the `update_action()` generator as shown in the following snippet. 
+
+```
+# Check for messages from the MQTT broker
+client.check_msg()
+```
+
+The image below shows the Node-RED flow used to inject directional command messages on the **"nodered/commands"** topic. 
 
 <p align='center'>
   <img src=docs/images/Node-RED-commands.png>
 </p>
 
+If any message is received from the broker, the message is passed to callback function, `get_commands()`. The `umqtt` function, `set_callback()`, is used to set `get_commands()` as a callback function as shown.
+
+```
+client.set_callback(get_commands)
+```
+
+The `get_commands()` callback function decodes the received message, compares it the string versions of the pre-defined robot actions then sets the value of the corresponding Node-RED dicionary command key to **"True"** (Recall that Node-RED command state values were initialized as **"False"**). The callback function definition is shown in the snippet below.
+
+```
+# MQTT callback function
+def get_commands(topic, msg):
+    if msg.decode() == "FORWARD":
+        Node_RED_Command['move_forward'] = True
+
+    if msg.decode() == "BACKWARD":
+        Node_RED_Command['move_backward'] = True
+    ...
+```
+
+The next step in the flow chart is to check which Node-RED command state is **"True"**. If one of the command states is "True", for instance `'move_forward'`, the `drive_speed` and `steering` values are updated for the main program loop to drive the segway forward by running the command `yield FORWARD`. 
+
+This process is shown in the snippet below where the segway is driven forward for 5 seconds before setting the 'move_forward' command state back to "False".
+
+```
+# MQTT mode
+if Node_RED_Command['move_forward'] == True:
+    yield FORWARD 
+    # Drive forward for 5 seconds, then stop
+    while action_timer.time() < 5000:
+        yield
+    yield STOP
+    Node_RED_Command['move_forward'] = False
+    ...
+```
+
+If all the command states are **"False"** or after all the command state checks are done, the MQTT mode transitions to the beacon mode. Whenever control is passed back to the `update_action()` generator, the steps outlined in this subsection are repeated.   
+
+The image below shows the connection between the MQTT clients and mosquitto.
 
 <p align='center'>
   <img src=docs/images/mosquitto_connection.png>
@@ -368,18 +413,31 @@ As shown in the figure below, the `update_action()` generator encloses the segwa
 
 #### Beacon mode for tether control with beacon
 
+Recall that in the beacon mode, the segway follows the infrared beacon by rotating (if the angle between them is greater than 10 degrees), and translating towards the beacon (when the angle is less than 10 degrees) and stops when the segway gets close to the beacon. 
+
+To enable tether control of the segway, the beacon has to be turned on, set to channel 1 (as shown below) and within range of the infrared sensor.
+
+<p align='center'>
+  <img src=docs/images/beacon.jpeg width=400>
+</p>
+
+The following flow chart delineates the steps of setting up tether control of the segway when in beacon mode. 
+
 <p align='center'>
   <img src=docs/images/beacon_mode.png>
 </p>
 
 ### Main program loop
 
+
 ## Walkthrough video
+
 
 ## Recommendations
 
 ## References
 
+- [GyroBoy](https://pybricks.com/ev3-micropython/examples/gyro_boy.html)
 - [Mosquitto docs](https://mosquitto.org/documentation/)
 - [HiveMQ](https://www.hivemq.com/mqtt/)
 - [NodeRED](https://nodered.org/about/)
