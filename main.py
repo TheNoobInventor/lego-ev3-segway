@@ -169,7 +169,7 @@ def update_action():
             yield action
 
             # if the angle between the infrared sensor and beacon is less than 10 degrees, the segway translates towards the beacon
-            if angle_error < 10:
+            if abs(angle_error) < 10:
                 error = 100 - relative_distance
                 d_error = (error - prev_error)/action_timer.time()
                 K_p, K_d = 6, 2.5
@@ -266,7 +266,7 @@ while True:
                 average_control_loop_period = (control_loop_timer.time() / 1000 / control_loop_counter)
             control_loop_counter += 1
 
-            # Calculate robot body angle and rate (or speed), the rate is calculated with a low pass filter
+            # Calculate robot body angle and rate (or speed)
             gyro_sensor_value = gyro_sensor.speed()
             gyro_offset *= (1 - GYRO_OFFSET_FACTOR)
             gyro_offset += GYRO_OFFSET_FACTOR * gyro_sensor_value
@@ -276,7 +276,7 @@ while True:
             # Motor angle values
             left_motor_angle, right_motor_angle = left_motor.angle(), right_motor.angle()
 
-            # Calculate wheel angle and rate, the wheel rate is calculated using a moving average
+            # Calculate wheel angle and rate, the wheel rate is calculated using a moving average on 4 item motor_position_change list
             previous_motor_sum = motor_position_sum
             motor_position_sum = left_motor_angle + right_motor_angle
             change = motor_position_sum - previous_motor_sum
