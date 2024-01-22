@@ -8,7 +8,7 @@ The robot can be controlled in two ways:
 can be sent to the Segway via the MQTT broker.
 
 - tether control using the EV3 infrared sensor and beacon. In this mode, the Segway follows the beacon by first rotating (using a Proportional
-controller) to reduce the angle between them to approximately 10 degrees, then it translates towards the beacon (using a Proportial 
+controller) to reduce the angle between them to approximately 10 degrees, then it translates towards the beacon (using a Proportional 
 Derivative (PD) controller) until it gets close to it then stops.
 
 The code is modified from: https://pybricks.com/ev3-micropython/examples/gyro_boy.html
@@ -163,7 +163,7 @@ def update_action():
         # than 10 degrees
         if relative_distance is not None:
             angle_error = 0 - angle
-            K_angle = 4
+            K_angle = 4 # controller gain
             steering = K_angle * angle_error
             action = Action(drive_speed=0, steering=steering)
             yield action
@@ -172,7 +172,7 @@ def update_action():
             if abs(angle_error) < 10:
                 error = 100 - relative_distance
                 d_error = (error - prev_error)/action_timer.time()
-                K_p, K_d = 6, 2.5
+                K_p, K_d = 6, 2.5 # controller gains
 
                 drive_speed = K_p * error + K_d * d_error
                 action = Action(drive_speed=drive_speed, steering=0)
