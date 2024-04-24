@@ -104,7 +104,7 @@ git clone https://github.com/TheNoobInventor/lego-ev3-segway.git
 
 ### MQTT and Node-RED setup
 
-Messaging Queuing Telemetry Transport (MQTT) is a protocol commonly used for message exchange between things namely devices, sensors, devices, computers etc. It uses a [publish and subscribe architecture](https://ably.com/topic/pub-sub) such that a device, an MQTT client, can publish a message on a topic to an MQTT broker and other MQTT clients subscribe to the topic to receive the message.
+Messaging Queuing Telemetry Transport (MQTT) is a protocol commonly used for message exchange between devices, sensors, computers etc. It uses a [publish and subscribe architecture](https://ably.com/topic/pub-sub) such that a device, an MQTT client, can publish a message on a topic to an MQTT broker and other MQTT clients subscribe to the topic to receive the message.
 
 The MQTT broker acts as an intermediary between devices by dispatching messages published on a topic from one client to other client(s) that subscribe to the same topic. A client can be both a publisher and subscriber. 
 
