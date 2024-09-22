@@ -104,11 +104,11 @@ git clone https://github.com/TheNoobInventor/lego-ev3-segway.git
 
 ### MQTT and Node-RED setup
 
-Messaging Queuing Telemetry Transport (MQTT) is a protocol commonly used for message exchange between things namely devices, sensors, devices, computers etc. It uses a [publish and subscribe architecture](https://ably.com/topic/pub-sub) such that a device, an MQTT client, can publish a message on a topic to an MQTT broker and other MQTT clients subscribe to the topic to receive the message.
+Messaging Queuing Telemetry Transport (MQTT) is a protocol commonly used for message exchange between devices, sensors, computers etc. It uses a [publish and subscribe architecture](https://ably.com/topic/pub-sub) such that a device, an MQTT client, can publish a message on a topic to an MQTT broker and other MQTT clients subscribe to the topic to receive the message.
 
 The MQTT broker acts as an intermediary between devices by dispatching messages published on a topic from one client to other client(s) that subscribe to the same topic. A client can be both a publisher and subscriber. 
 
-MQTT messages contain a payload with the data to be consumed by the client, in the case of the LEGO segway, the payload will contain commands, for instance **"TURN LEFT"**, to control the segway. Payloads are usually written in JSON format.
+MQTT messages contain a payload with the data to be consumed by the client, in the case of the LEGO segway, the payload will contain commands, for instance **"TURN LEFT"**, to control the segway. Payloads can be strings, JSON, binary data, or even custom formats that are application specific.
 
 In this project, the MQTT broker and one MQTT client, Node-RED, are installed on the PC. The mosquitto MQTT broker is used and can be installed on a number of operating systems, distributions, or platforms; mosquitto can be downloaded from [here](https://mosquitto.org/download/). 
 
