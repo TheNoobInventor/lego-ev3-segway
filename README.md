@@ -51,9 +51,9 @@ The following components were used for this project:
 
 - LEGO MINDSTORMS EV3 Home Edition #31313
 - [EV3 Gyro Sensor](https://raisingrobots.com/product/gyro-sensor/)
-- MicroSD card (larger than 2 GB but not greater than 32 GB)
+- MicroSD card (minimum of 2GB and a maximum of 32GB)
 - [EDIMAX EW-7811Un wireless USB adapter](https://www.edimax.com/edimax/merchandise/merchandise_detail/data/edimax/in/wireless_adapters_n150/ew-7811un/)
-- PC or single board computer (to run the MQTT broker and Node-RED) with an internt connection
+- PC or single board computer (to run the MQTT broker and Node-RED) with an internet connection
 
 The robot build instructions are available [here](https://robotsquare.com/2014/06/23/tutorial-building-balanc3r/).
 
