@@ -307,7 +307,7 @@ However, to ensure that the segway can connect to MQTT broker without any authen
 sudo vim /etc/mosquitto/mosquitto.conf
 ```
 
-Add these lines to enable the segway to listen for incoming network connections on port 1883 (MQTT broker default port) and to connect easily to the MQTT broker without any authentication:
+Add these lines to the end of the file:
 
 ```
 listener 1883 0.0.0.0
