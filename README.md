@@ -443,7 +443,7 @@ if Node_RED_Command['move_forward'] == True:
     ...
 ```
 
-If all the command states are **"False"** or after all the command state checks are done, the MQTT mode transitions to the beacon mode. Whenever control is passed back to the `update_action()` generator, the steps outlined in this subsection are repeated.   
+If all the command states are **"False"** or after all the command state checks are done, the MQTT mode transitions to the beacon mode.
 
 The image below shows the connection between the MQTT clients and mosquitto.
 
@@ -507,6 +507,8 @@ if abs(angle_error) < 10:
 ```
 
 Some introductory resources on PID controllers are available [here](https://www.youtube.com/watch?v=UR0hOmjaHp0) and [here](https://www.digikey.com/en/maker/projects/introduction-to-pid-controllers/763a6dca352b4f2ba00adde46445ddeb).
+
+Whenever control is passed back to the update_action() generator, the MQTT and beacon mode code blocks are executed again.
 
 ### Main program loop
 
