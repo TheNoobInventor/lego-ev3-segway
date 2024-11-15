@@ -1,6 +1,6 @@
 # Lego EV3 Segway
 
-A segway robot is built with the LEGO MINDSTORMS EV3 robot kit and the EV3 Gyro sensor. The self-balancing code is written in Python using EV3 MicroPython which runs on top of the ev3dev Operating System (OS).
+A segway robot is built with the LEGO MINDSTORMS EV3 robot kit and the EV3 Gyro sensor. The self-balancing code is written in MicroPython using EV3 MicroPython which runs on top of the ev3dev Operating System (OS).
 
 The robot can be controlled in two ways:
 
@@ -14,8 +14,6 @@ Derivative (PD) controller) until it gets close to it then stops. This control m
 <p align='center'>
   <img src=docs/images/beacon_mode.gif>
 </p>
-
-🚧	***(Project demonstration video in progress)***
 
 - [Lego EV3 Segway](#lego-ev3-segway)
   - [Hardware](#hardware)
@@ -100,6 +98,41 @@ ssh robot@ev3dev.local
 Then run this command to clone the project repository:
 ```
 git clone https://github.com/TheNoobInventor/lego-ev3-segway.git
+```
+
+***Note***: If you encounter issues cloning the repository, you can download a zipped version of the repository, send it the segway then unzip it. These can be achieved by running the following commands.
+
+First of all, open the project GitHub link then download the zip repository file by clicking on the button as shown in the image below.
+
+<p align='center'>
+  <img src=docs/images/download_zip_repo.png>
+</p>
+
+Open up a terminal and navigate to the Downloads directory
+```
+cd Downloads
+```
+
+Secure copy (SCP) is used to send the downloaded zipped file to segway. However, the segway IP address is required for this action. One way of obtaining this is downloading and running the [Angry IP Scanner](https://angryip.org/) application. It scans for devices on your network and returns their hostnames and respective IP addresses. The hostname for the robot is `ev3dev.local` as shown in the screenshot of Angry IP Scanner below.
+
+<p align='center'>
+  <img src=docs/images/angry_ip_results.png width="500">
+</p>
+
+Execute this command to send the zipped file to the segway
+
+```
+scp lego-ev3-segway-master.zip robot@ipaddress:
+```
+
+Run this command to unzip the zipped repository file
+```
+unzip lego-ev3-segway-master.zip
+```
+
+Then remove zip file with this
+```
+rm lego-ev3-segway-master.zip
 ```
 
 ### MQTT and Node-RED setup
@@ -455,7 +488,7 @@ The image below shows the connection between the MQTT clients and mosquitto.
 
 Recall that in the beacon mode, the segway follows the infrared beacon by rotating (if the angle between them is greater than `10` degrees), translating towards the beacon (when the angle is less than `10` degrees) and stops when the segway gets close to the beacon. 
 
-To enable tether control of the segway, the beacon has to be turned on, set to channel `1` (as shown below) and within range of the infrared sensor.
+To enable tether control of the segway, the beacon has to be turned on, set to channel `1` (as shown below) and be within range of the infrared sensor.
 
 <p align='center'>
   <img src=docs/images/beacon.jpeg width=400>
@@ -475,7 +508,7 @@ relative_distance, angle = infrared_sensor.beacon(1)
 
 The `relative_distance` ranges from `0` to `100`  while the `angle` is an approximate value of -`75` to `75` degrees between the sensor and beacon. If the tuple above returns `(None, None)`, this signifies that the beacon isn't detected by the infrared sensor. 
 
-From the chart, if the `relative_distance` is `None` (which also implies that `angle` is also `None`), the `yield` keyword is used to pass control to the main program loop. Otherwise, a Proportional(P) controller, a variant of the Proportional Integral Derivative (PID) controller, is utilized in calculating the `steering` value of the Action `namedtuple`.
+From the chart, if the `relative_distance` is `None` (which implies that `angle` is also `None`), the `yield` keyword is used to pass control to the main program loop. Otherwise, a Proportional (P) controller, a variant of the Proportional Integral Derivative (PID) controller, is utilized in calculating the `steering` value of the Action `namedtuple`. This is obtained by multiplying the angle error term, which is the difference between `0` and the obtained angle from the beacon, by the controller gain or constant attained through experimentation. The following snippet shows this process.
 
 ```
 if relative_distance is not None:
@@ -486,9 +519,11 @@ if relative_distance is not None:
   yield action
 ```
 
-The `drive_speed` is set to `0` in the newly formed Action. This action is passed to main program loop to calculate the motor output power required to reduce the angle between the segway and the beacon, thus rotating the robot.
+The `drive_speed` is set to `0` in the newly formed Action. This action is passed to the main program loop to calculate the motor output power required to reduce the angle between the segway and the beacon, thus rotating the robot.
 
-As the robot rotates towards the beacon, if the `angle_error` is less than `10` degrees, a Proportional Derivative (PD) controller, is used to calculate the `drive_speed` value of a new Action. The `steering` value is `0` and the action is yielded to the main program loop to drive the robot forward towards the beacon. When the `relative_distance` between the robot and beacon is less than `10` the robot action `STOP` is yielded. This process is shown in the code snippet below.
+As the robot rotates towards the beacon, if the `angle_error` is less than `10` degrees, a Proportional Derivative (PD) controller, another PID controller variation, is used to calculate the `drive_speed` value for a new robot Action. In this case, the error term is the difference between `100` and the `relative_distance` obtained from the beacon. Similarly, the Proportional controller multiplies this error with the controller gain which is added to the Derivative controller, which multiplies the change in the error over time by its controller gain.
+
+The `steering` value is set to `0` and the action is yielded to the main program loop to drive the robot forward towards the beacon. When the `relative_distance` between the robot and beacon is less than `10` the robot action `STOP` is yielded. This process is shown in the code snippet below.
 
 ```
 if abs(angle_error) < 10:
@@ -506,9 +541,9 @@ if abs(angle_error) < 10:
       yield STOP
 ```
 
-Some introductory resources on PID controllers are available [here](https://www.youtube.com/watch?v=UR0hOmjaHp0) and [here](https://www.digikey.com/en/maker/projects/introduction-to-pid-controllers/763a6dca352b4f2ba00adde46445ddeb).
+Whenever control is passed back to the update_action() generator, the MQTT and beacon mode code blocks are re-executed.
 
-Whenever control is passed back to the update_action() generator, the MQTT and beacon mode code blocks are executed again.
+Some introductory resources on PID controllers are available [here](https://www.youtube.com/watch?v=UR0hOmjaHp0) and [here](https://www.digikey.com/en/maker/projects/introduction-to-pid-controllers/763a6dca352b4f2ba00adde46445ddeb).
 
 ### Main program loop
 
@@ -658,7 +693,7 @@ output_power = (-0.01 * drive_speed) + (1.2 * robot_body_rate +
                                           0.12 * wheel_angle)
 ```
 
-The coefficients of variables, `robot_body_rate`, `robot_body_angle`, `wheel_rate` and `wheel_angle`, were obtained iteratively. It is advisable to start by only change one constant in the tuning process before moving on to another variable, then circle back as need to make further adjustments. 
+The coefficients of variables, `robot_body_rate`, `robot_body_angle`, `wheel_rate` and `wheel_angle`, were obtained iteratively. It is advisable to start by only changing one constant in the tuning process before moving on to another variable, then circle back as need to make further adjustments. 
 
 The calculated output power is constrained to `+/- 100%` which matches the range of the `dc` [method](https://pybricks.com/ev3-micropython/ev3devices.html#pybricks.ev3devices.Motor.dc) used to drive the motors. Finally, the motors are driven at the output power calculated in the respective `steering` directions.
 
@@ -722,7 +757,9 @@ wait(TARGET_LOOP_PERIOD - single_loop_timer.time())
 
 ## Project Demonstration
 
-Work in progress
+The video below walks through each step of setting up the segway to be controlled using Node-RED and the infrared beacon.
+
+[<img src="docs/images/thumbnail.png" width="50%">](https://youtu.be/rd8de9ClbUM)
 
 ## References
 
